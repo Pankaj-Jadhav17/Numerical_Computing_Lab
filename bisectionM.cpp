@@ -8,7 +8,6 @@
 #include <iostream>
 #include <cmath>
 using namespace std;
-
 // Step 1: Define the function p(x) = x^2 - 2
 double p(double x) {
     return x * x - 2;
