@@ -4,8 +4,8 @@
 using namespace std;
 
 int main() {
-    double a = 1.0, b = 2.0;     // hardcoded interval
-    double x0 = 1.5;
+    double a = 0.5, b = 1.0;     // hardcoded interval
+    double x0 = 2.0;         
     double dummy = 0.0;
 
     Root *m1 = new Bisection();
@@ -22,6 +22,14 @@ int main() {
 
     return 0;
 }
+
+
+
+
+
+
+
+
 
 /*
 #include <iostream>

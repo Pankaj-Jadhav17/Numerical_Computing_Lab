@@ -5,19 +5,18 @@
 Root::Root() {}
 Root::~Root() {}
 
-// function f(x) = x^2 - 2
+// Example function to find root of: f(x) = 4x³ - 3x
 static double f(double x) {
-    return x * x - 2;
+    return 4*x*x * x - 3*x;
 }
 
-// derivative f'(x)
 static double df(double x) {
-    return 2 * x;
+    return 12 * x * x - 3;
 }
 
 // g(x) for fixed point
 static double g(double x) {
-    return sqrt(2);   // fixed-point function
+    return sqrt(2);  
 }
 
 //Bisection 
@@ -36,7 +35,7 @@ double Bisection::solve(double &a, double &b) {
 //Newton Raphson 
 double NewtonRaphson::solve(double &x0, double &dummy) {
     for (int i = 0; i < 10; i++)
-        x0 = x0 - f(x0) / df(x0);
+        x0 = x0 - f(x0) / df(x0);     
     return x0;
 }
 
@@ -46,6 +45,32 @@ double FixedPoint::solve(double &x0, double &dummy) {
         x0 = g(x0);
     return x0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
