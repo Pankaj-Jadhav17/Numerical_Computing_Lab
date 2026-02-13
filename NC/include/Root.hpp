@@ -19,7 +19,6 @@ class FixedPoint : public Root {
 public:
     double solve(double &x0, double &dummy) override;
 };
-
 #endif
 
 
