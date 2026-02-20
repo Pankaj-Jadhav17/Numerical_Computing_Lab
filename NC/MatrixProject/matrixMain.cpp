@@ -1,37 +1,49 @@
 #include "include/matrix.hpp"
-
 int main()
 {
     try
     {
-        MatrixBase *A = new Matrix(2, 2);
-        MatrixBase *B = new Matrix(2, 2);
+        int choice;
+        cout << "1. Addition\n2. Subtraction\n3. Gaussian Elimination\n";
+        cin >> choice;
 
-        cout << "Enter Matrix A:\n";
-        A->read();
+        if (choice == 1 || choice == 2)
+        {
+            int r, c;
+            cin >> r >> c;
 
-        cout << "Enter Matrix B:\n";
-        B->read();
+            MatrixBase *A = new Matrix(r, c);
+            MatrixBase *B = new Matrix(r, c);
 
-        MatrixBase *C = A->add(*B);
-        cout << "\nA + B:\n";
-        C->display();
+            A->read();
+            B->read();
 
-        // Solve equations
-        int n;
-        cout << "\nEnter number of variables: ";
-        cin >> n;
+            MatrixBase *C;
 
-        MatrixBase *aug = new Matrix(n, n + 1);
-        aug->read();
+            if (choice == 1)
+                C = A->add(*B);
+            else
+                C = A->subtract(*B);
 
-        aug->gaussianElimination();
-        aug->backSubstitution();
+            C->display();
 
-        delete A;
-        delete B;
-        delete C;
-        delete aug;
+            delete A;
+            delete B;
+            delete C;
+        }
+        else if (choice == 3)
+        {
+            int n;
+            cin >> n;
+
+            MatrixBase *aug = new Matrix(n, n + 1);
+            aug->read();
+
+            aug->gaussianElimination();
+            aug->backSubstitution();
+
+            delete aug;
+        }
     }
     catch (exception &e)
     {
