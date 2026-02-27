@@ -1,0 +1,18 @@
+# Matrix input file — 5x5 system
+# This system has a zero on the diagonal at row 0, col 0
+# It will FAIL without pivoting and SUCCEED with pivoting
+# This perfectly demonstrates WHY partial pivoting matters!
+#
+# System:
+#   0x1 + 2x2 +  x3 -  x4 +  x5 =  4
+#   3x1 -  x2 + 2x3 +  x4 -  x5 =  9
+#   x1  +  x2 -  x3 + 2x4 +  x5 =  5
+#  -x1  + 3x2 +  x3 -  x4 + 2x5 =  7
+#   2x1 +  x2 -  x3 +  x4 - 3x5 = -1
+
+5
+ 0   2   1  -1   1    4
+ 3  -1   2   1  -1    9
+ 1   1  -1   2   1    5
+-1   3   1  -1   2    7
+ 2   1  -1   1  -3   -1

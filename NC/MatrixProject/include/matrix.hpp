@@ -1,95 +1,28 @@
 #ifndef MATRIX_HPP
 #define MATRIX_HPP
 
-#include <iostream>
 #include <vector>
 #include <stdexcept>
 using namespace std;
 
-// Abstract Parent Class
-class MatrixBase
-{
-protected:
-    int rows, cols;
-
-public:
-    MatrixBase(); 
-    MatrixBase(int r, int c);
-
-    //Virtual destructor
-    virtual ~MatrixBase();
-
-    //Pure virtual functions → abstract class
-    virtual void read() = 0;
-    virtual void display() const = 0;
-
-    virtual MatrixBase* add(const MatrixBase &m) const = 0;
-    virtual MatrixBase* subtract(const MatrixBase &m) const = 0;
-
-    virtual void gaussianElimination() = 0;
-    virtual void backSubstitution() = 0;
-};
-
-//Child Class
-class Matrix : public MatrixBase
+class Matrix
 {
 private:
-    vector<vector<double>> mat; // 2D vector to store matrix elements
+    int rows, cols;
+    vector<vector<double>> data;
 
 public:
-    // Constructors
-    Matrix();
-    Matrix(int r, int c);
+    Matrix(int r = 0, int c = 0);
 
-    // Copy constructor
-    Matrix(const Matrix &other);
+    int getRows() const;
+    int getCols() const;
 
-    // Destructor
-    ~Matrix();
-
-    // Overriding
-    void read() override;
-    void display() const override;
-
-    MatrixBase* add(const MatrixBase &m) const override;
-    MatrixBase* subtract(const MatrixBase &m) const override;
-
-    void gaussianElimination() override;
-    void backSubstitution() override;
+    double get(int i, int j) const;
+    void set(int i, int j, double value);
+    void swapRows(int r1, int r2);
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -105,62 +38,86 @@ public:
 // #include <stdexcept>
 // using namespace std;
 
-// // 🔹 Parent class
+// // Abstract Parent Class
 // class MatrixBase
 // {
 // protected:
 //     int rows, cols;
 
 // public:
-//     MatrixBase() : rows(0), cols(0) {}
+//     MatrixBase(); 
+//     MatrixBase(int r, int c);
 
-//     // 🔹 Virtual constructor concept (factory)
-//     virtual MatrixBase* create(int r, int c) = 0;
+//     //Virtual destructor
+//     virtual ~MatrixBase();
 
-//     // Virtual functions
+//     //Pure virtual functions → abstract class
 //     virtual void read() = 0;
-//     virtual void display() = 0;
+//     virtual void display() const = 0;
 
-//     virtual MatrixBase* add(MatrixBase &m) = 0;
-//     virtual MatrixBase* subtract(MatrixBase &m) = 0;
+//     virtual MatrixBase* add(const MatrixBase &m) const = 0;
+//     virtual MatrixBase* subtract(const MatrixBase &m) const = 0;
 
 //     virtual void gaussianElimination() = 0;
 //     virtual void backSubstitution() = 0;
-
-//     // 🔹 Virtual destructor
-//     virtual ~MatrixBase()
-//     {
-//         cout << "Base class destructor\n";
-//     }
 // };
 
-// // 🔹 Child class
+// //Child Class
 // class Matrix : public MatrixBase
 // {
 // private:
-//     vector<vector<double>> mat;
+//     vector<vector<double>> mat; // 2D vector to store matrix elements
 
 // public:
+//     // Constructors
 //     Matrix();
 //     Matrix(int r, int c);
 
-//     // overriding factory
-//     MatrixBase* create(int r, int c) override;
+//     // Copy constructor
+//     Matrix(const Matrix &other);
 
+//     // Destructor
+//     ~Matrix();
+
+//     // Overriding
 //     void read() override;
-//     void display() override;
+//     void display() const override;
 
-//     MatrixBase* add(MatrixBase &m) override;
-//     MatrixBase* subtract(MatrixBase &m) override;
+//     MatrixBase* add(const MatrixBase &m) const override;
+//     MatrixBase* subtract(const MatrixBase &m) const override;
 
 //     void gaussianElimination() override;
 //     void backSubstitution() override;
-
-//     // destructor
-//     ~Matrix()
-//     {
-//         cout << "Matrix destructor\n";
-//     }
 // };
 
 // #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,128 +1,35 @@
 #include "../include/matrix.hpp"
+#include <algorithm>
 
-// Parent constructors
-MatrixBase::MatrixBase() : rows(0), cols(0) {}
-MatrixBase::MatrixBase(int r, int c) : rows(r), cols(c) {}
-MatrixBase::~MatrixBase() {}
-
-//Child constructors
-Matrix::Matrix() : MatrixBase() {}
-
-Matrix::Matrix(int r, int c) : MatrixBase(r, c)
+Matrix::Matrix(int r, int c)
 {
-    if (r <= 0 || c <= 0)
-        throw invalid_argument("Invalid matrix size");
-
-    this->mat.resize(rows, vector<double>(cols, 0));
+    rows = r;
+    cols = c;
+    data.resize(r, vector<double>(c, 0.0));
 }
 
-// Copy constructor
-Matrix::Matrix(const Matrix &other)
+int Matrix::getRows() const { return rows; }
+int Matrix::getCols() const { return cols; }
+
+double Matrix::get(int i, int j) const
 {
-    this->rows = other.rows;
-    this->cols = other.cols;
-    this->mat = other.mat;
+    if (i < 0 || i >= rows || j < 0 || j >= cols)
+        throw out_of_range("Matrix index out of range");
+    return data[i][j];
 }
 
-// Destructor
-Matrix::~Matrix()
+void Matrix::set(int i, int j, double value)
 {
-    cout << "Matrix destroyed\n";
+    if (i < 0 || i >= rows || j < 0 || j >= cols)
+        throw out_of_range("Matrix index out of range");
+    data[i][j] = value;
 }
 
-// Read
-void Matrix::read()
+void Matrix::swapRows(int r1, int r2)
 {
-    cout << "Enter elements:\n";
-    for (int i = 0; i < this->rows; i++)
-        for (int j = 0; j < this->cols; j++)
-            cin >> this->mat[i][j];
-}
-
-// Display
-void Matrix::display() const
-{
-    for (auto &row : mat)
-    {
-        for (auto val : row)
-            cout << val << " ";
-        cout << endl;
-    }
-}
-
-// Addition
-MatrixBase* Matrix::add(const MatrixBase &m) const
-{
-    const Matrix &other = dynamic_cast<const Matrix&>(m);
-
-    if (this->rows != other.rows || this->cols != other.cols)
-        throw logic_error("Addition not possible");
-
-    Matrix *result = new Matrix(this->rows, this->cols);
-
-    for (int i = 0; i < this->rows; i++)
-        for (int j = 0; j < this->cols; j++)
-            result->mat[i][j] = this->mat[i][j] + other.mat[i][j];
-
-    return result;
-}
-
-// Subtraction
-MatrixBase* Matrix::subtract(const MatrixBase &m) const
-{
-    const Matrix &other = dynamic_cast<const Matrix&>(m);
-
-    Matrix *result = new Matrix(this->rows, this->cols);
-
-    for (int i = 0; i < this->rows; i++)
-        for (int j = 0; j < this->cols; j++)
-            result->mat[i][j] = this->mat[i][j] - other.mat[i][j];
-
-    return result;
-}
-
-// Gaussian Elimination
-void Matrix::gaussianElimination()
-{
-    for (int k = 0; k < this->rows; k++)
-    {
-        if (mat[k][k] == 0)
-            throw runtime_error("Zero pivot");
-
-        for (int i = k + 1; i < this->rows; i++)
-        {
-            double factor = mat[i][k] / mat[k][k];
-
-            for (int j = k; j < this->cols; j++)
-                mat[i][j] -= factor * mat[k][j];
-        }
-    }
-
-    cout << "\nRow Echelon Form:\n";
-    display();
-}
-
-// Back substitution
-void Matrix::backSubstitution()
-{
-    if (cols != rows + 1)
-        throw logic_error("Need augmented matrix");
-
-    vector<double> x(rows);
-
-    for (int i = rows - 1; i >= 0; i--)
-    {
-        x[i] = mat[i][cols - 1];
-
-        for (int j = i + 1; j < rows; j++)
-            x[i] -= mat[i][j] * x[j];
-
-        x[i] /= mat[i][i];
-    }
-
-    cout << "\nSolutions:\n";
-    for (int i = 0; i < rows; i++)
-        cout << "x" << i + 1 << " = " << x[i] << endl;
+    if (r1 < 0 || r1 >= rows || r2 < 0 || r2 >= rows)
+        throw out_of_range("Row index out of range");
+    swap(data[r1], data[r2]);
 }
 
 
@@ -134,57 +41,7 @@ void Matrix::backSubstitution()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// #include "../include/matrix.hpp"
+// #include "matrix.hpp"
 
 // // Default constructor
 // Matrix::Matrix()
