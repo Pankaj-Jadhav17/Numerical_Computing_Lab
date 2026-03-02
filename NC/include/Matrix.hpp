@@ -1,14 +1,15 @@
-#ifndef MATRIX_HPP
-#define MATRIX_HPP
+#ifndef MATRIX_H
+#define MATRIX_H
 
 #include <vector>
-#include <stdexcept>
+#include <string>
+
 using namespace std;
 
 class Matrix
 {
-private: 
-    int rows, cols; 
+protected:
+    int rows, cols;
     vector<vector<double>> data;
 
 public:
@@ -19,10 +20,57 @@ public:
 
     double get(int i, int j) const;
     void set(int i, int j, double value);
+
     void swapRows(int r1, int r2);
+
+    // File utilities
+    void readFromFile(const string &file);
+    void writeSolution(const string &file, const vector<double> &x);
 };
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// #ifndef MATRIX_HPP
+// #define MATRIX_HPP
+
+// #include <vector>
+// #include <stdexcept>
+// using namespace std;
+
+// class Matrix
+// {
+// private: 
+//     int rows, cols; 
+//     vector<vector<double>> data;
+
+// public:
+//     Matrix(int r = 0, int c = 0);
+
+//     int getRows() const;
+//     int getCols() const;
+
+//     double get(int i, int j) const;
+//     void set(int i, int j, double value);
+//     void swapRows(int r1, int r2);
+// };
+
+// #endif
 
 
 

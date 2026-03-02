@@ -1,6 +1,6 @@
  #include<iostream>
  #include<cmath>
- #include"myComplex.hpp"
+ #include"../include/myComplex.hpp"
  
  
  
@@ -26,6 +26,7 @@
         myComplex temp;
         temp.a = a + obj.a;
         temp.b = b + obj.b;
+        temp.c = c + obj.c;
         return temp;
     }
     myComplex myComplex::subtract(myComplex obj)
@@ -33,6 +34,7 @@
         myComplex temp;
         temp.a = a - obj.a;
         temp.b = b - obj.b;
+        temp.c = c - obj.c;
         return temp;
     }
     myComplex myComplex::multiply(myComplex obj)
