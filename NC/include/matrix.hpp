@@ -7,8 +7,8 @@ using namespace std;
 
 class Matrix
 {
-private:
-    int rows, cols;
+private: 
+    int rows, cols; 
     vector<vector<double>> data;
 
 public:

@@ -27,7 +27,7 @@ Matrix readFromFile(const string &file)
     if (n <= 0)
         throw runtime_error("Invalid or missing matrix size in file: " + file);
 
-    Matrix A(n, n + 1);
+    Matrix A(n, n + 1); 
     int row = 0;
 
     // Read n rows, skipping any comment lines in between

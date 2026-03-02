@@ -18,14 +18,14 @@ vector<double> GaussianElimination::solve(Matrix &A)
         if (pivoting)
         {
             int maxRow = k;
-            double maxVal = fabs(A.get(k, k));
+            double maxVal = fabs(A.get(k, k)); //pivot value
 
-            for (int i = k + 1; i < n; i++)
+            for (int i = k + 1; i < n; i++)   
             {
                 if (fabs(A.get(i, k)) > maxVal)
                 {
-                    maxVal = fabs(A.get(i, k));
-                    maxRow = i;
+                    maxVal = fabs(A.get(i, k)); //update max pivot value
+                    maxRow = i;                 //update row index of max pivot
                 }
             }
             A.swapRows(k, maxRow);
@@ -38,10 +38,10 @@ vector<double> GaussianElimination::solve(Matrix &A)
         // Eliminate all rows below row k
         for (int i = k + 1; i < n; i++)
         {
-            double factor = A.get(i, k) / A.get(k, k);      
+            double factor = A.get(i, k) / A.get(k, k);    //compute factor to scale row k for elimination  
 
             for (int j = k; j < n + 1; j++)
-                A.set(i, j, A.get(i, j) - factor * A.get(k, j)); 
+                A.set(i, j, A.get(i, j) - factor * A.get(k, j));  //subtract scaled row k from row i
         }
     }
 
@@ -50,12 +50,12 @@ vector<double> GaussianElimination::solve(Matrix &A)
 
     for (int i = n - 1; i >= 0; i--)
     {
-        x[i] = A.get(i, n); //compute RHS 
+        x[i] = A.get(i, n); 
 
         for (int j = i + 1; j < n; j++)
-            x[i] -= A.get(i, j) * x[j];  //substract known terms from RHS
+            x[i] -= A.get(i, j) * x[j];  
 
-        x[i] /= A.get(i, i);   //divide by pivot
+        x[i] /= A.get(i, i);  
     }  
 
     return x;

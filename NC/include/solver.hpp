@@ -7,8 +7,8 @@
 class Solver
 {
 public:
-    virtual vector<double> solve(Matrix &A) = 0;
-    virtual ~Solver() {}
+    virtual vector<double> solve(Matrix &A) = 0; 
+    virtual ~Solver() {}  
 };
 
 #endif
