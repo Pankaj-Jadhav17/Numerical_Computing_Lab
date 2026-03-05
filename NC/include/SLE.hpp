@@ -3,15 +3,14 @@
 
 #include "Matrix.hpp"
 
-class SLE : public Matrix
-{
+// Any solver (Gauss, LU, etc.) must inherit this class and implement solve().
+class SLE : public Matrix {
 public:
-    SLE(int n = 0);
+    SLE(int r, int c) : Matrix(r, c) {}  
+        virtual ~SLE() = default; 
 
-    // Pure virtual solver
-    virtual vector<double> solve() = 0;
-
-    virtual ~SLE() {}
+    // Pure virtual: each subclass must provide its own solve() method
+    virtual void solve(std::ofstream& outFile) = 0;
 };
 
-#endif
+#endif 

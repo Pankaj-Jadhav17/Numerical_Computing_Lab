@@ -1,34 +1,53 @@
-#include<iostream>
-#include"include/myComplex.hpp"
-
+#include <iostream>
+#include <fstream>
+#include <memory>   // for std::unique_ptr 
+#include "include/GaussElimination.hpp"
+#include "include/LU.hpp"
 
 int main() {
-    myComplex c1; // Default Constructor
-    myComplex c2(3.0f, 4.0f); // Parameterized Constructor with two parameters
-    myComplex c3(1.0f, 2.0f, 5.0f); // Parameterized Constructor with three parameters
-    float cnorm;
-    cnorm = c2.myComplexNorm(c2); // Norm Function
-    std::cout << "Norm of c2: " << cnorm << std::endl;
-    double cdiv;
-    cdiv = c2.myComplexDivision(c3); // Division Function
-    std::cout << "Result of Division: " << cdiv<< " + " << cdiv << "i" << std::endl;
+    std::ifstream inFile("input.txt");
+    std::ofstream outFile("output.txt");
 
-    myComplex c4;
-    c4 = c2.add(c3); // Addition Function
-    std::cout<< "Result of Addition: " << c4.a << " + " << c4.b << "i" << std::endl;
+    if (!inFile) {
+        std::cerr << "Error: Could not open input.txt\n";
+        return 1;
+    }
+    if (!outFile) {
+        std::cerr << "Error: Could not open output.txt\n";
+        return 1;
+    }
 
-    myComplex c5;
-    c5 = c3.subtract(c2); // Subtraction Function
-    std::cout << "Result of Subtraction: " << c5.a << " + " << c5.b << "i" << std::endl;
+    int n;
+    inFile >> n;
+    if (n <= 0) {
+        std::cerr << "Error: Matrix size must be a positive integer.\n";
+        return 1;
+    }
 
-    myComplex c6;
-    c6 = c2.multiply(c3); // Multiplication Function
-    std::cout << "Result of Multiplication: " << c6.a << " + " <<c6.b << "i" << std::endl;
+    int method;
+    inFile >> method;
 
-    myComplex c7;
-    c7 = c3.myComplexConjugate(c2); // Conjugate Function
-    std::cout << "Result of Conjugate: " << c7.a << " + " << c7.b << "i" << std::endl; 
-    
-    
+    std::unique_ptr<SLE> solver;
+
+    if (method == 1) {
+        int pivotInput;
+        inFile >> pivotInput;
+        bool pivot = (pivotInput != 0);
+        solver = std::make_unique<GaussElimination>(n, n + 1, pivot);
+    }
+    else if (method == 2) {
+        solver = std::make_unique<LU>(n, n + 1);
+    }
+    else {
+        std::cerr << "Error: Invalid method. Use 1 (Gauss) or 2 (LU).\n";
+        return 1;
+    }
+
+    solver->readFromFile(inFile);
+    solver->solve(outFile);
+
+    std::cout << "Done! Results written to output.txt\n";
+
+    // No need to call delete — unique_ptr cleans up automatically
     return 0;
 }
