@@ -1,15 +1,15 @@
-#ifndef GAUSS_ELIMINATION_H
-#define GAUSS_ELIMINATION_H
+#ifndef GAUSS_ELIMINATION_HPP
+#define GAUSS_ELIMINATION_HPP
 
 #include "SLE.hpp"
 
 class GaussElimination : public SLE {
-private:
-    bool usePivoting; 
 
 public:
-    GaussElimination(int r, int c, bool pivot);
-    void solve(std::ofstream& outFile) override;
+
+    GaussElimination(int r,int c);
+
+    std::vector<double> solve() override;
 };
 
 #endif 

@@ -1,14 +1,30 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra
+CXXFLAGS = -std=c++17 -Wall
 
-# Collect all .cpp source files
-SRCS = src/Matrix.cpp src/GaussElimination.cpp src/LU.cpp main.cpp
+INCLUDE = -Iinclude
 
-all:
-	$(CXX) $(CXXFLAGS) $(SRCS) -Iinclude -o matrix_app
+SRC = src/Matrix.cpp \
+      src/SLE.cpp \
+      src/GaussElimination.cpp \
+      src/GaussJacobi.cpp \
+      src/LUCrout.cpp \
+      src/LUDoolittle.cpp \
+      src/LUCholesky.cpp
 
-run:
-	./matrix_app
+OBJ = $(SRC:.cpp=.o)
+
+TARGET = matrixApp
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ) main.o
+	$(CXX) $(CXXFLAGS) $(OBJ) main.o -o $(TARGET)
+
+main.o: main.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -c main.cpp
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
 clean:
-	rm -f matrix_app
+	rm -f $(OBJ) main.o $(TARGET)

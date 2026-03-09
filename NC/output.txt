@@ -1,4 +1,0 @@
-Solution using LU Decomposition (Doolittle):
-x1 = 2
-x2 = 3
-x3 = -1

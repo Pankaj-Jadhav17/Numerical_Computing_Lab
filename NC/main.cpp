@@ -1,53 +1,244 @@
 #include <iostream>
 #include <fstream>
-#include <memory>   // for std::unique_ptr 
+#include <vector>
+
+#include "include/Matrix.hpp"
 #include "include/GaussElimination.hpp"
-#include "include/LU.hpp"
+#include "include/GaussJacobi.hpp"
+#include "include/LUCrout.hpp"
+#include "include/LUDoolittle.hpp"
+#include "include/LUCholesky.hpp"
 
-int main() {
-    std::ifstream inFile("input.txt");
-    std::ofstream outFile("output.txt");
+using namespace std;
 
-    if (!inFile) {
-        std::cerr << "Error: Could not open input.txt\n";
-        return 1;
-    }
-    if (!outFile) {
-        std::cerr << "Error: Could not open output.txt\n";
-        return 1;
-    }
+int main()
+{
+    ifstream fin("input/input.txt");
+    ofstream fout("output/output.txt");
 
-    int n;
-    inFile >> n;
-    if (n <= 0) {
-        std::cerr << "Error: Matrix size must be a positive integer.\n";
-        return 1;
+    if(!fin)
+    {
+        cout << "Input file not found\n";
+        return 0;
     }
 
-    int method;
-    inFile >> method;
+    int r,c;
+    fin >> r >> c;
 
-    std::unique_ptr<SLE> solver;
+    cout << "\nChoose Method:\n";
+    cout << "1. Gauss Elimination\n";
+    cout << "2. Gauss Jacobi\n";
+    cout << "3. LU Crout\n";
+    cout << "4. LU Doolittle\n";
+    cout << "5. LU Cholesky\n";
+    cout << "Enter choice: ";
 
-    if (method == 1) {
-        int pivotInput;
-        inFile >> pivotInput;
-        bool pivot = (pivotInput != 0);
-        solver = std::make_unique<GaussElimination>(n, n + 1, pivot);
+    int choice;
+    cin >> choice;
+
+    vector<double> solution;
+
+    switch(choice)
+    {
+        case 1:
+        {
+            GaussElimination solver(r,c);
+            fin >> solver;
+
+            fout << "Using Gauss Elimination\n";
+            fout << "Input Matrix:\n" << solver;
+
+            solution = solver.solve();
+            break;
+        }
+
+        case 2:
+        {
+            GaussJacobi solver(r,c);
+            fin >> solver;
+
+            fout << "Using Gauss Jacobi\n";
+            fout << "Input Matrix:\n" << solver;
+
+            solution = solver.solve();
+            break;
+        }
+
+        case 3:
+        {
+            LUCrout solver(r,c);
+            fin >> solver;
+
+            fout << "Using LU Crout\n";
+            fout << "Input Matrix:\n" << solver;
+
+            solution = solver.solve();
+            break;
+        }
+
+        case 4:
+        {
+            LUDoolittle solver(r,c);
+            fin >> solver;
+
+            fout << "Using LU Doolittle\n";
+            fout << "Input Matrix:\n" << solver;
+
+            solution = solver.solve();
+            break;
+        }
+
+        case 5:
+        {
+            LUCholesky solver(r,c);
+            fin >> solver;
+
+            fout << "Using LU Cholesky\n";
+            fout << "Input Matrix:\n" << solver;
+
+            solution = solver.solve();
+            break;
+        }
+
+        default:
+        {
+            cout << "Invalid choice\n";
+            return 0;
+        }
     }
-    else if (method == 2) {
-        solver = std::make_unique<LU>(n, n + 1);
+
+    fout << "\nSolution:\n";
+
+    for(size_t i = 0; i < solution.size(); i++)
+    {
+        fout << "x" << i+1 << " = " << solution[i] << endl;
     }
-    else {
-        std::cerr << "Error: Invalid method. Use 1 (Gauss) or 2 (LU).\n";
-        return 1;
-    }
 
-    solver->readFromFile(inFile);
-    solver->solve(outFile);
+    fin.close();
+    fout.close();
 
-    std::cout << "Done! Results written to output.txt\n";
+    cout << "\nProgram executed successfully.\n";
+    cout << "Check output/output.txt\n";
 
-    // No need to call delete — unique_ptr cleans up automatically
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// #include <iostream>
+// #include <fstream>
+// #include "Matrix.hpp"
+// #include "GaussElimination.hpp"
+// #include "GaussJacobi.hpp"
+
+// using namespace std;
+
+// int main()
+// {
+//     ifstream fin("input/input.txt");
+//     ofstream fout("output/output.txt");
+
+//     int r,c;
+
+//     fin >> r >> c;
+
+//     Matrix A(r,c);
+
+//     fin >> A;
+
+//     fout << "Input Matrix:\n";
+//     fout << A;
+
+//     if(A.isDiagonallyDominant())
+//     {
+//         fout << "\nUsing Jacobi Method\n";
+
+//         GaussJacobi solver(A);
+//         solver.solve(fout);
+//     }
+//     else
+//     {
+//         fout << "\nUsing Gauss Elimination\n";
+
+//         GaussElimination solver(A);
+//         solver.solve(fout);
+//     }
+
+//     fin.close();
+//     fout.close();
+
+//     return 0;
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+// #include <iostream>
+// #include <fstream>
+// #include "include/Matrix.hpp"
+
+// using namespace std;
+
+// int main() {
+
+//     ifstream fin("input/input.txt");
+//     ofstream fout("output/output.txt");
+
+//     if(!fin) {
+//         cout << "Input file not found\n";
+//         return 0;
+//     }
+
+//     int r,c;
+
+//     fin >> r >> c;
+
+//     Matrix A(r,c);
+
+//     fin >> A;
+
+//     fout << "Input Matrix:\n";
+//     fout << A;
+
+//     Matrix T = A.transpose();
+
+//     fout << "\nTranspose Matrix:\n";
+//     fout << T;
+
+//     if(A.isSquare()) {
+//         fout << "\nDeterminant = " << A.determinant() << endl;
+//     }
+
+//     fin.close();
+//     fout.close();
+
+//     cout << "Program executed successfully.\n";
+//     cout << "Check output.txt for results.\n";
+
+//     return 0;
+// }

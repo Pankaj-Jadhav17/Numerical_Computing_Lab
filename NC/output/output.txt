@@ -1,0 +1,10 @@
+Using Gauss Elimination
+Input Matrix:
+5 1 9 2
+3 4 2 1
+8 2 3 3
+
+Solution:
+x1 = 0.379679
+x2 = -0.0427807
+x3 = 0.0160428
