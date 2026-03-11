@@ -1,0 +1,12 @@
+# Matrix input file — 3x3 system
+# Format:  first line = n (matrix size)
+#          next n lines = augmented row [ a1 a2 ... an | b ]
+# System:  2x + y - z = 8
+#         -3x - y + 2z = -11
+#         -2x + y + 2z = -3
+# Expected solution: x=2, y=3, z=-1
+
+3
+2   1  -1   8
+-3  -1   2  -11
+-2   1   2  -3
