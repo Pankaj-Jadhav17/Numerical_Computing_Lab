@@ -4,11 +4,8 @@
 #include "SLE.hpp"
 
 class LUCholesky : public SLE {
-
 public:
-
     LUCholesky(int r,int c);
-
     std::vector<double> solve() override;
 };
 

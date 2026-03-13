@@ -8,7 +8,7 @@ std::vector<double> GaussJacobi::solve()
 {
     int n = rows;
 
-    // ── Step 1: Reorder rows so the largest value is on the diagonal ──
+    //Step 1: Reorder rows so the largest value is on the diagonal
     // This helps Gauss-Jacobi converge (called partial pivoting)
     for (int col = 0; col < n; col++)
     {
@@ -20,7 +20,7 @@ std::vector<double> GaussJacobi::solve()
         std::swap(data[col], data[maxRow]);   // swap entire rows
     }
 
-    // ── Step 2: Check diagonal dominance (warn user if not met) ───────
+ // Step 2: Check diagonal dominance (warn user if not met)
     bool dominant = true;
     for (int i = 0; i < n; i++)
     {

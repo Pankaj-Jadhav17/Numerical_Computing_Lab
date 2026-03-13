@@ -13,10 +13,9 @@ protected:
     std::vector<std::vector<double>> data;
 
 public:
-
     Matrix();
     Matrix(int rows,int cols);
-    Matrix(const Matrix &m);
+    Matrix(const Matrix &m); 
 
     void readFromFile(std::ifstream &fin);
     void displayToFile(std::ofstream &fout) const;
@@ -25,7 +24,7 @@ public:
     Matrix operator-(const Matrix &m) const;
     Matrix operator*(const Matrix &m) const;
 
-    double& operator()(int i,int j);
+    double& operator()(int i,int j);//  for non-const objects
     double operator()(int i,int j) const;
 
     bool operator==(const Matrix &m) const;
