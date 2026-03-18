@@ -15,13 +15,13 @@ using namespace std;
 
 ofstream fout;
 
-// ================= OUTPUT =================
+// OUTPUT 
 void write(const string& s) {
     cout << s;
     fout << s;
 }
 
-// ================= INPUT =================
+// INPUT 
 bool readMatrix(const string& path, vector<vector<double>>& M, int& n) {
     ifstream fin(path);
     if (!fin) return false;
@@ -48,7 +48,7 @@ bool readVector(const string& path, vector<double>& b, int n) {
     return true;
 }
 
-// ================= PRINT =================
+// PRINT 
 void printMatrix(const vector<vector<double>>& M, int n, const string& name) {
     write("\n" + name + "\n");
     for (int i = 0; i < n; i++) {
@@ -71,7 +71,7 @@ void printSolution(const vector<double>& x) {
     }
 }
 
-// ================= SOLVER =================
+//  SOLVER 
 template<typename Solver>
 void fillSolver(Solver& s,
                 const vector<vector<double>>& A,
@@ -124,7 +124,7 @@ vector<double> solveSystem(const vector<vector<double>>& A,
     return x;
 }
 
-// ================= RUN SYSTEM =================
+// RUN SYSTEM 
 void runSolve(const string& title,
               const vector<vector<double>>& A,
               const vector<double>& b,
@@ -150,7 +150,7 @@ void runSolve(const string& title,
     printSolution(x);
 }
 
-// ================= MAIN =================
+//  MAIN 
 int main() {
 
     vector<vector<double>> A, Atilde;
@@ -168,7 +168,7 @@ int main() {
 
     fout.open("output/output.txt");
 
-    // ================= SELECT MODE =================
+    // SELECT MODE 
     cout << "\nSelect Mode:\n";
     cout << "1. Work with A\n";
     cout << "2. Work with A~\n";
@@ -178,7 +178,7 @@ int main() {
     int mode;
     cin >> mode;
 
-    // ================= OPERATION =================
+    //  OPERATION 
     cout << "\nSelect Operation:\n";
     cout << "1. Determinant\n";
     cout << "2. Inverse\n";
@@ -188,7 +188,7 @@ int main() {
     int op;
     cin >> op;
 
-    // ================= CASE 1 & 2 =================
+    // CASE 1 & 2 
     if (mode == 1 || mode == 2) {
 
         vector<vector<double>> Ause = (mode == 1) ? A : Atilde;
@@ -228,7 +228,7 @@ int main() {
         }
     }
 
-    // ================= ALL 4 CASES =================
+    // ALL 4 CASES 
     else if (mode == 3 && op == 3) {
         runSolve("1. A x = b", A, b, nA);
         runSolve("2. A~ x = b", Atilde, b, nAt);
