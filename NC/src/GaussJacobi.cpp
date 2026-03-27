@@ -29,7 +29,7 @@ std::vector<double> GaussJacobi::solve()
         for (int j = 0; j < n; j++)
             if (j != i) sum += std::fabs(data[i][j]);
 
-        if (diag <= sum) { dominant = false; break; }
+        if (diag < sum) { dominant = false; break; }
     }
     if (!dominant)
         std::cout << "[Warning] Matrix is not diagonally dominant."
@@ -39,8 +39,8 @@ std::vector<double> GaussJacobi::solve()
     std::vector<double> x(n, 0.0);      // start with x = [0, 0, ...]
     std::vector<double> x_new(n, 0.0);
 
-    int    maxIter  = 1000;
-    double tolerance = 1e-6;
+    int    maxIter   = 10000;
+    double tolerance = 1e-10;
 
     for (int iter = 0; iter < maxIter; iter++)
     {
@@ -68,6 +68,7 @@ std::vector<double> GaussJacobi::solve()
         }
     }
 
-    std::cout << "[Error] Jacobi did not converge in " << maxIter << " iterations.\n";
+    std::cout << "[Warning] Gauss-Jacobi did not converge in "
+              << maxIter << " iterations. Returning best estimate.\n";
     return x;
 }
