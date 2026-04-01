@@ -1,27 +1,39 @@
 
 Matrix
-      4.0000   -1.0000    1.0000
-      4.0000   -8.0000    1.0000
-     -2.0000    1.0000    5.0000
+     10.000000    7.000000    8.000000    7.000000
+      7.000000    5.000000    6.000000    5.000000
+      8.000000    6.000000   10.000000    9.000000
+      7.000000    5.000000    9.000000   10.000000
 
-==============================
-Solving System
-==============================
+══════════════════════════════════════════════
+  EIGENVALUE ANALYSIS
+══════════════════════════════════════════════
 
-Matrix A
-      4.0000   -1.0000    1.0000
-      4.0000   -8.0000    1.0000
-     -2.0000    1.0000    5.0000
+Matrix A  (n = 4)
+     10.000000    7.000000    8.000000    7.000000
+      7.000000    5.000000    6.000000    5.000000
+      8.000000    6.000000   10.000000    9.000000
+      7.000000    5.000000    9.000000   10.000000
 
-Choose Method:
-1. Gauss Elimination
-2. Gauss Jacobi
-3. LU Crout
-4. LU Doolittle
-5. LU Cholesky
-6. Gauss Seidel
+Select Eigenvalue Method:
+  1. Power Method          (largest eigenvalue + eigenvector)
+  2. Inverse Power Method  (smallest eigenvalue + eigenvector)
+  3. QR Algorithm          (ALL eigenvalues, sorted by magnitude)
+  4. Gershgorin Bounds     (eigenvalue region estimation)
+  5. Condition Number      (cond = |λmax| / |λmin|)
+  6. Run ALL methods
+Enter choice: 
 
-Solution:
-  x1 = 2.00000000
-  x2 = 4.00000000
-  x3 = 3.00000000
+══════════════════════════════════════════════
+  Method 4: Gershgorin Circle Theorem
+══════════════════════════════════════════════
+Theory: Each eigenvalue lies in at least one disk D_i
+        D_i = { z : |z - a_ii| ≤ R_i }
+        R_i = Σ_{j≠i} |a_ij|   (sum of off-diagonal |entries|)
+
+  D_1: center= 10.0000,  radius= 22.0000  =>  [-12.0000,  32.0000]
+  D_2: center=  5.0000,  radius= 18.0000  =>  [-13.0000,  23.0000]
+  D_3: center= 10.0000,  radius= 23.0000  =>  [-13.0000,  33.0000]
+  D_4: center= 10.0000,  radius= 21.0000  =>  [-11.0000,  31.0000]
+
+  Union (all eigenvalues ∈): [-13.0000, 33.0000]
