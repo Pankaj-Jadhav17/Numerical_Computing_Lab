@@ -14,22 +14,19 @@
 #include "include/LUCholesky.hpp"
 #include "include/GaussSeidel.hpp"
 #include "include/EigenValue.hpp"
+#include "include/Lagrange.hpp"
 
 using namespace std;
 
 ofstream fout;
 
-// ─────────────────────────────────────────────────────────────
 //  Output helper: writes to both cout and output file
-// ─────────────────────────────────────────────────────────────
 void write(const string& s) {
     cout << s;
     fout << s;
 }
 
-// ─────────────────────────────────────────────────────────────
 //  I/O helpers
-// ─────────────────────────────────────────────────────────────
 bool readMatrix(const string& path, vector<vector<double>>& M, int& n) {
     ifstream fin(path);
     if (!fin) return false;
@@ -51,9 +48,33 @@ bool readVector(const string& path, vector<double>& b, int n) {
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────
+// Read interpolation input file
+// Format: n, then n lines of "x y", then one query value
+bool readInterpolationInput(const string& path, vector<double>& xs, vector<double>& ys,double& xQuery) {
+    ifstream fin(path);
+    if (!fin) return false;
+
+    // skip comment lines
+    string line;
+    int n = 0;
+    while (getline(fin, line)) {
+        if (!line.empty() && line[0] != '#') {
+            // first non-comment line is n
+            n = stoi(line);
+            break;
+        }
+    }
+    if (n <= 0) return false;
+
+    xs.resize(n);
+    ys.resize(n);
+    for (int i = 0; i < n; ++i)
+        fin >> xs[i] >> ys[i];
+    fin >> xQuery;
+    return true;
+}
+
 //  Print helpers
-// ─────────────────────────────────────────────────────────────
 void printMatrix(const vector<vector<double>>& M, int rows,
                  const string& name) {
     write("\n" + name + "\n");
@@ -93,20 +114,16 @@ void printSeparator(const string& title = "") {
     write("══════════════════════════════════════════════\n");
 }
 
-// ─────────────────────────────────────────────────────────────
-//  Solve-system helpers (methods 1–6)
-// ─────────────────────────────────────────────────────────────
+//  Solve-system helpers (methods 1-6)
 template<typename Solver>
-void fillSolver(Solver& s, const vector<vector<double>>& A,
-                const vector<double>& b, int n) {
+void fillSolver(Solver& s, const vector<vector<double>>& A, const vector<double>& b, int n) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) s(i, j) = A[i][j];
         s(i, n) = b[i];
     }
 }
 
-vector<double> solveSystem(const vector<vector<double>>& A,
-                           const vector<double>& b, int method, int n) {
+vector<double> solveSystem(const vector<vector<double>>& A, const vector<double>& b, int method, int n) {
     vector<double> x;
     switch (method) {
         case 1: { GaussElimination s(n,n+1); fillSolver(s,A,b,n); x=s.solve(); break; }
@@ -119,8 +136,7 @@ vector<double> solveSystem(const vector<vector<double>>& A,
     return x;
 }
 
-void runSolve(const string& title, const vector<vector<double>>& A,
-              const vector<double>& b, int n) {
+void runSolve(const string& title, const vector<vector<double>>& A, const vector<double>& b, int n) {
     printSeparator(title);
     printMatrix(A, n, "Matrix A");
     write("\nChoose Solver:\n");
@@ -138,7 +154,6 @@ void runSolve(const string& title, const vector<vector<double>>& A,
 
 void runEigenvalues(const vector<vector<double>>& Adata, int n) {
 
-    // Build EigenValue object (inherits Matrix)
     Matrix mat(n, n);
     for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
@@ -159,8 +174,6 @@ void runEigenvalues(const vector<vector<double>>& Adata, int n) {
 
     int choice; cin >> choice;
     write("\n");
-
-    // ── lambda helpers ───────────────────────────────────────
 
     auto doPower = [&]() {
         printSeparator("Method 1: Power Iteration");
@@ -199,14 +212,12 @@ void runEigenvalues(const vector<vector<double>>& Adata, int n) {
             snprintf(buf, sizeof(buf), "    λ%-2d = %+.10f\n", i+1, eigs[i]);
             write(string(buf));
         }
-        // Product = det(A)
         double prod = 1.0;
         for (double e : eigs) prod *= e;
         char buf2[128];
         snprintf(buf2, sizeof(buf2),
             "\n  Product(λ) = %.6f  (≈ det(A) — Cayley-Hamilton)\n", prod);
         write(string(buf2));
-        // Trace = sum of eigenvalues
         double traceSum = 0.0;
         for (double e : eigs) traceSum += e;
         snprintf(buf2, sizeof(buf2),
@@ -256,13 +267,12 @@ void runEigenvalues(const vector<vector<double>>& Adata, int n) {
             write("  [OK] Well-conditioned matrix\n");
     };
 
-    // ── dispatch ─────────────────────────────────────────────
     switch (choice) {
-        case 1: doPower();                                          break;
-        case 2: doInverse();                                        break;
-        case 3: doQR();                                             break;
-        case 4: doGershgorin();                                     break;
-        case 5: doCond();                                           break;
+        case 1: doPower();      break;
+        case 2: doInverse();    break;
+        case 3: doQR();         break;
+        case 4: doGershgorin(); break;
+        case 5: doCond();       break;
         case 6:
             doPower();
             doInverse();
@@ -275,104 +285,198 @@ void runEigenvalues(const vector<vector<double>>& Adata, int n) {
     }
 }
 
+// ── INTERPOLATION ────────────────────────────────────────
+void runInterpolation() {
+    printSeparator("INTERPOLATION");
+
+    // Read data from file
+    vector<double> xs, ys;
+    double xQuery;
+    if (!readInterpolationInput("input/input_interpolation.txt", xs, ys, xQuery)) {
+        write("[ERROR] Cannot open input/input_interpolation.txt\n");
+        write(" Expected format:\n");
+        write(" n\n");
+        write(" x_0  y_0\n");
+        write(" x_1  y_1\n");
+        write(" ...\n");
+        write(" x_query\n");
+        return;
+    }
+
+    int n = (int)xs.size();
+    char buf[128];
+
+    // Print data table
+    write("\nData Points:\n");
+    write("   i        x            y\n");
+    write("  ---  -----------  -----------\n");
+    for (int i = 0; i < n; i++) {
+        snprintf(buf, sizeof(buf), "  %3d  %11.6f  %11.6f\n", i, xs[i], ys[i]);
+        write(string(buf));
+    }
+    snprintf(buf, sizeof(buf), "\nInterpolate at x = %.6f\n", xQuery);
+    write(string(buf));
+
+    // Method selection
+    write("\nChoose Interpolation Method:\n");
+    write("  1. Lagrange Interpolation\n");
+    write("Enter choice: ");
+    int method; cin >> method;
+    write("\n");
+
+    switch (method) {
+        case 1: {
+            printSeparator("Lagrange Interpolation");
+            write("Theory: P(x) = Σ y_i · L_i(x)\n");
+            write("        L_i(x) = Π_{j≠i} (x - x_j) / (x_i - x_j)\n\n");
+
+            try {
+                Lagrange lag(xs, ys);
+
+                // Show each basis polynomial value
+                write("Basis polynomials at x_query:\n");
+                for (int i = 0; i < n; i++) {
+                    double L = lag.basisPoly(i, xQuery);
+                    snprintf(buf, sizeof(buf),
+                             "  L_%d(%.4f) = %12.8f   [y_%d = %.6f]\n",
+                             i, xQuery, L, i, ys[i]);
+                    write(string(buf));
+                }
+
+                double result = lag.interpolate(xQuery);
+                write("\n");
+                snprintf(buf, sizeof(buf),
+                         "  P(%.6f) = %.10f\n", xQuery, result);
+                write(string(buf));
+            } catch (const exception& e) {
+                write(string("  [Error] ") + e.what() + "\n");
+            }
+            break;
+        }
+        default:
+            write("  [Error] Invalid interpolation method choice.\n");
+    }
+}
+
 int main() {
 
     vector<vector<double>> A, Atilde;
     vector<double> b, btilde;
     int nA, nAt;
 
-    if (!readMatrix("input/input_A.txt",      A,      nA)  ||
-        !readMatrix("input/input_Atilde.txt",  Atilde, nAt) ||
-        !readVector("input/input_b.txt",       b,      nA)  ||
-        !readVector("input/input_btilde.txt",  btilde, nAt)) {
-        cout << "[ERROR] Missing input files!\n";
-        return 1;
-    }
+    bool hasMatrices =
+        readMatrix("input/input_A.txt",      A,      nA)  &&
+        readMatrix("input/input_Atilde.txt",  Atilde, nAt) &&
+        readVector("input/input_b.txt",       b,      nA)  &&
+        readVector("input/input_btilde.txt",  btilde, nAt);
 
     fout.open("output/output.txt");
 
-    // ── SELECT MATRIX ────────────────────────────────────────
-    cout << "\nSelect Matrix:\n";
-    cout << "  1. Work with A\n";
-    cout << "  2. Work with A~\n";
-    cout << "  3. All 4 systems (solve/eigen for both)\n";
+    // ── TOP-LEVEL OPERATION ──────────────────────────────────
+    cout <<"Numerical Computation Toolbox \n";
+    cout << "\nSelect Category:\n";
+    cout << "  1. Matrix Operations  (Det / Inverse / SLE / Eigenvalues)\n";
+    cout << "  2. Interpolation      (Lagrange)\n";
     cout << "Enter choice: ";
-    int mode; cin >> mode;
+    int category; cin >> category;
 
-    // ── SELECT OPERATION ─────────────────────────────────────
-    cout << "\nSelect Operation:\n";
-    cout << "  1. Determinant\n";
-    cout << "  2. Inverse\n";
-    cout << "  3. Solve Linear System\n";
-    cout << "  4. ★ Eigenvalue Analysis\n";
-    cout << "Enter choice: ";
-    int op; cin >> op;
+    if (category == 2) {
+        runInterpolation();
+    }
+    else if (category == 1) {
 
-    // ── SINGLE MATRIX MODE ───────────────────────────────────
-    if (mode == 1 || mode == 2) {
-
-        vector<vector<double>> Ause = (mode == 1) ? A : Atilde;
-        vector<double>         buse = (mode == 1) ? b : btilde;
-        int n = (mode == 1) ? nA : nAt;
-
-        Matrix mat(n, n);
-        for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
-                mat(i, j) = Ause[i][j];
-
-        printMatrix(Ause, n, "Matrix");
-
-        if (op == 1) {
-            double det = mat.determinant();
-            char buf[64];
-            snprintf(buf, sizeof(buf), "\nDeterminant = %.8f\n", det);
-            write(string(buf));
+        if (!hasMatrices) {
+            cout << "[ERROR] Missing matrix input files!\n";
+            fout.close();
+            return 1;
         }
-        else if (op == 2) {
-            try {
-                Matrix inv = mat.inverse();
-                write("\nInverse Matrix:\n");
-                for (int i = 0; i < n; i++) {
-                    write("  ");
-                    for (int j = 0; j < n; j++) {
-                        char buf[32];
-                        snprintf(buf, sizeof(buf), "%12.6f", inv(i, j));
-                        write(string(buf));
+
+        // ── SELECT MATRIX ────────────────────────────────────
+        cout << "\nSelect Matrix:\n";
+        cout << "  1. Work with A\n";
+        cout << "  2. Work with A~\n";
+        cout << "  3. All 4 systems (solve/eigen for both)\n";
+        cout << "Enter choice: ";
+        int mode; cin >> mode;
+
+        // ── SELECT OPERATION ─────────────────────────────────
+        cout << "\nSelect Operation:\n";
+        cout << "  1. Determinant\n";
+        cout << "  2. Inverse\n";
+        cout << "  3. Solve Linear System\n";
+        cout << "  4. ★ Eigenvalue Analysis\n";
+        cout << "Enter choice: ";
+        int op; cin >> op;
+
+        // ── SINGLE MATRIX MODE ───────────────────────────────
+        if (mode == 1 || mode == 2) {
+
+            vector<vector<double>> Ause = (mode == 1) ? A : Atilde;
+            vector<double>         buse = (mode == 1) ? b : btilde;
+            int n = (mode == 1) ? nA : nAt;
+
+            Matrix mat(n, n);
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < n; j++)
+                    mat(i, j) = Ause[i][j];
+
+            printMatrix(Ause, n, "Matrix");
+
+            if (op == 1) {
+                double det = mat.determinant();
+                char buf[64];
+                snprintf(buf, sizeof(buf), "\nDeterminant = %.8f\n", det);
+                write(string(buf));
+            }
+            else if (op == 2) {
+                try {
+                    Matrix inv = mat.inverse();
+                    write("\nInverse Matrix:\n");
+                    for (int i = 0; i < n; i++) {
+                        write("  ");
+                        for (int j = 0; j < n; j++) {
+                            char buf[32];
+                            snprintf(buf, sizeof(buf), "%12.6f", inv(i, j));
+                            write(string(buf));
+                        }
+                        write("\n");
                     }
-                    write("\n");
+                } catch (...) {
+                    write("\nMatrix is singular — no inverse exists.\n");
                 }
-            } catch (...) {
-                write("\nMatrix is singular — no inverse exists.\n");
+            }
+            else if (op == 3) {
+                runSolve("Solving System", Ause, buse, n);
+            }
+            else if (op == 4) {
+                runEigenvalues(Ause, n);
+            }
+            else {
+                write("\n[Error] Unknown operation.\n");
             }
         }
-        else if (op == 3) {
-            runSolve("Solving System", Ause, buse, n);
-        }
-        else if (op == 4) {
-            runEigenvalues(Ause, n);
-        }
-        else {
-            write("\n[Error] Unknown operation.\n");
+
+        // ── ALL SYSTEMS MODE ─────────────────────────────────
+        else if (mode == 3) {
+            if (op == 3) {
+                runSolve("1. A  x = b",   A,      b,      nA);
+                runSolve("2. A~ x = b",   Atilde, b,      nAt);
+                runSolve("3. A  x = b~",  A,      btilde, nA);
+                runSolve("4. A~ x = b~",  Atilde, btilde, nAt);
+            }
+            else if (op == 4) {
+                write("\n=== Eigenvalue Analysis: Matrix A ===\n");
+                runEigenvalues(A, nA);
+                write("\n=== Eigenvalue Analysis: Matrix A~ ===\n");
+                runEigenvalues(Atilde, nAt);
+            }
+            else {
+                write("\n[Error] Mode 3 only supports operations 3 and 4.\n");
+            }
         }
     }
-
-    // ── ALL SYSTEMS MODE ─────────────────────────────────────
-    else if (mode == 3) {
-        if (op == 3) {
-            runSolve("1. A  x = b",   A,      b,      nA);
-            runSolve("2. A~ x = b",   Atilde, b,      nAt);
-            runSolve("3. A  x = b~",  A,      btilde, nA);
-            runSolve("4. A~ x = b~",  Atilde, btilde, nAt);
-        }
-        else if (op == 4) {
-            write("\n=== Eigenvalue Analysis: Matrix A ===\n");
-            runEigenvalues(A, nA);
-            write("\n=== Eigenvalue Analysis: Matrix A~ ===\n");
-            runEigenvalues(Atilde, nAt);
-        }
-        else {
-            write("\n[Error] Mode 3 only supports operations 3 and 4.\n");
-        }
+    else {
+        cout << "\n[Error] Invalid category choice.\n";
     }
 
     fout.close();

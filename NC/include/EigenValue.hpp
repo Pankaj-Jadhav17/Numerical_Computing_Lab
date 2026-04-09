@@ -7,7 +7,6 @@
 class EigenValue : public Matrix {
 
 public:
-    // ----- Constructors -----
     // Constructs an n×n zero matrix ready to be filled.
     EigenValue(int n);
     // Copies from an existing Matrix object. Throws if not square.
@@ -40,9 +39,7 @@ public:
 
 private:
     // QR decomposition via modified Gram-Schmidt: A = Q·R
-    void qrDecompose(const std::vector<std::vector<double>>& A,
-                     std::vector<std::vector<double>>& Q,
-                     std::vector<std::vector<double>>& R) const;
+    void qrDecompose(const std::vector<std::vector<double>>& A,std::vector<std::vector<double>>& Q, std::vector<std::vector<double>>& R) const;
 
     // Gaussian elimination with partial pivoting: solves M·x = rhs
     std::vector<double> gaussSolve(std::vector<std::vector<double>> M,

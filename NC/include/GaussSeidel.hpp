@@ -1,6 +1,5 @@
 #ifndef GAUSS_SEIDEL_HPP
 #define GAUSS_SEIDEL_HPP
-
 #include "SLE.hpp"
 
 class GaussSeidel : public SLE {
