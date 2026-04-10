@@ -1,14 +1,19 @@
 #ifndef LAGRANGE_HPP
 #define LAGRANGE_HPP
 #include "Interpolation.hpp"
+using namespace std;
 
 class Lagrange : public Interpolation {
+
 public:
-    Lagrange(const std::vector<double>& xs, const std::vector<double>& ys);
-    // Evaluate P(x) using the Lagrange formula
+    // Constructor: passes xs, ys up to Interpolation --> Matrix
+    Lagrange(const vector<double>& xs, const vector<double>& ys);
+    // Evaluates P(x) = sum of y_i * L_i(x)
     double interpolate(double x) const override;
-    // Evaluate the i-th basis polynomial L_i(x)
+    // Evaluates i-th Lagrange basis polynomial:
     double basisPoly(int i, double x) const;
-    std::string methodName() const override { return "Lagrange Interpolation"; }
+    // Implements pure virtual from Interpolation
+    string methodName() const override { return "Lagrange Interpolation"; }
 };
-#endif
+
+#endif      

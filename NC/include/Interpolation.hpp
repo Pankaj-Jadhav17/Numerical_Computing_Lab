@@ -1,29 +1,34 @@
 #ifndef INTERPOLATION_HPP
 #define INTERPOLATION_HPP
-#include "Matrix.hpp"
-#include <vector>
-#include <string>
 
-// Inherits Matrix to store the data point table [x_i | y_i]
+#include "Matrix.hpp"
+#include <string>
+using namespace std;
+
+// Interpolation is CHILD of Matrix
+// stores data as Matrix:
+//   rows     = number of data points (n)
+//   cols     = 2  (always)
+//   data[i][0] = x_i
+//   data[i][1] = y_i
+// NO own data members — everything comes from Matrix
+
 class Interpolation : public Matrix {
-protected:
-    int n;   // number of data points
-    std::vector<double> xData;
-    std::vector<double> yData;
+
 public:
-    // Construct from parallel x / y vectors
-    Interpolation(const std::vector<double>& xs, const std::vector<double>& ys);
+    // Constructor: takes parallel x and y vectors
+    Interpolation(const vector<double>& xs, const vector<double>& ys);
 
     virtual ~Interpolation() = default;
-    // Evaluate the interpolating polynomial at x
-    virtual double interpolate(double x) const = 0;
-    // Human-readable method name
-    virtual std::string methodName() const = 0;
 
-    // Accessors
-    int    numPoints() const { return n; }
-    double xAt(int i)  const { return xData[i]; }
-    double yAt(int i)  const { return yData[i]; }
+    // Pure virtual — subclass MUST implement
+    virtual double interpolate(double x) const = 0;
+    virtual string methodName()          const = 0;
+
+    // Accessors — all use Matrix members (rows, data)
+    int    numPoints() const { return rows;         }  // rows  = n
+    double xAt(int i)  const { return data[i][0];   }  // col 0 = x
+    double yAt(int i)  const { return data[i][1];   }  // col 1 = y
 };
 
 #endif
