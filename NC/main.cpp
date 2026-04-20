@@ -15,7 +15,7 @@
 #include "include/GaussSeidel.hpp"
 #include "include/EigenValue.hpp"
 #include "include/Lagrange.hpp"
-#include "include/LeastSquares.hpp"      // NEW
+#include "include/Leastsquares.hpp"      
 
 using namespace std;
 
