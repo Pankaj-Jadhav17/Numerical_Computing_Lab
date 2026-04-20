@@ -14,7 +14,8 @@ SRCS     = main.cpp \
            src/LUCholesky.cpp \
            src/EigenValue.cpp \
            src/Interpolation.cpp \
-           src/Lagrange.cpp
+           src/Lagrange.cpp \
+           src/LeastSquares.cpp
 
 OBJS     = $(SRCS:.cpp=.o)
 

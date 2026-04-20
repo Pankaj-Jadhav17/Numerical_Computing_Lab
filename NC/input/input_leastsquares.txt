@@ -1,0 +1,14 @@
+# Least Squares input file
+# Format:
+#   n            (number of data points)
+#   x0  f0
+#   x1  f1
+#   ...
+#   xn-1  fn-1
+# Example from notes: xi = -2,-1,1,2,4,5  fi = 7,5,2,0,-2
+5
+-2   7
+ 1   5
+ 2   2
+ 4   0
+ 5  -2
