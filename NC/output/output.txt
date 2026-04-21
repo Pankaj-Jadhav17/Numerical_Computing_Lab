@@ -8,7 +8,7 @@ Theory:  Fit y = a*x + b  to N data points
            a*sum(xi^2) + b*sum(xi)  = sum(fi*xi)
            a*sum(xi)   + b*N        = sum(fi)
 
-Data Points Table:
+Data Points Table (read via Matrix inheritance):
   -----------------------------------------------------------
    i     xi        fi        xi^2      fi*xi
   -----------------------------------------------------------
