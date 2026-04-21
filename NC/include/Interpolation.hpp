@@ -5,14 +5,6 @@
 #include <string>
 using namespace std;
 
-// Interpolation is CHILD of Matrix
-// stores data as Matrix:
-//   rows     = number of data points (n)
-//   cols     = 2  (always)
-//   data[i][0] = x_i
-//   data[i][1] = y_i
-// NO own data members — everything comes from Matrix
-
 class Interpolation : public Matrix {
 
 public:
