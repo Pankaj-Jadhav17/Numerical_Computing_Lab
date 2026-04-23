@@ -5,6 +5,7 @@ TARGET   = matrixApp
 
 SRCS     = main.cpp \
            src/Matrix.cpp \
+           src/CurveFitting.cpp \
            src/SLE.cpp \
            src/GaussElimination.cpp \
            src/GaussJacobi.cpp \

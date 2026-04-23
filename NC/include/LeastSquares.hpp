@@ -1,27 +1,23 @@
 #ifndef LEASTSQUARES_HPP
 #define LEASTSQUARES_HPP
-#include "Matrix.hpp"      // inherits rows, cols, data
+#include "CurveFitting.hpp"
 #include <vector>
 #include <string>
 using namespace std;
 
-class LeastSquares : public Matrix {
-
+class LeastSquares : public CurveFitting {
 public:
-    explicit LeastSquares(const Matrix& m);
-    vector<double> fit() const;
+    explicit LeastSquares(const Matrix& m);  // delegates validation to CurveFitting
+    //  virtual ~LeastSquares() = default;         // default destructor
+    // Solves the normal equations and returns {a, b}  (a = slope, b = intercept).
+    vector<double> fit() const override;
 
-    // Evaluates fitted line at a given x: returns a*x + b
+    double evaluate(double x, const vector<double>& coeffs) const override;
+    double rmsError(const vector<double>& coeffs) const override;
+
+    string methodName() const override { return "Least Squares Linear Fit"; }
+
     double evaluate(double x, double a, double b) const;
-
-    // Computes RMS error = sqrt( (1/N) * Σ(fi - (a*xi+b))² )
     double rmsError(double a, double b) const;
-
-    //Accessors (use Matrix's protected members, no new storage) 
-    int    numPoints() const { return rows; }          // rows  == n
-    double xAt(int i)  const { return data[i][0]; }   // col 0 == xi
-    double fAt(int i)  const { return data[i][1]; }   // col 1 == fi
-
-    string methodName() const { return "Least Squares Linear Fit"; }
 };
 #endif
