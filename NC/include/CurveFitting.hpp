@@ -7,8 +7,8 @@ using namespace std;
 
 class CurveFitting : public Matrix {
 public:
-    explicit CurveFitting(const Matrix& m);   // defined in CurveFitting.cpp
-    virtual ~CurveFitting();                  // defined in CurveFitting.cpp
+    explicit CurveFitting(const Matrix& m);
+    virtual ~CurveFitting();
 
     //Pure virtual interface
     virtual vector<double> fit() const = 0;
@@ -21,4 +21,4 @@ public:
     double xAt(int i)  const { return data[i][0]; }
     double fAt(int i)  const { return data[i][1]; }
 };
-#endif 
+#endif
