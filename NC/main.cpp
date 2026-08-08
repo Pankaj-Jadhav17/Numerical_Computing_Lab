@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <filesystem>
+#include <sstream>
 #include "include/Matrix.hpp"
 #include "include/GaussElimination.hpp"
 #include "include/GaussJacobi.hpp"
@@ -16,6 +17,11 @@
 #include "include/EigenValue.hpp"
 #include "include/Lagrange.hpp"
 #include "include/LeastSquares.hpp"
+#include "include/ForwardDifference.hpp"
+#include "include/BackwardDifference.hpp"
+#include "include/CentralDifference.hpp"
+#include "include/CentralSecondDerivative.hpp"
+#include "include/DifferentiationAnalyzer.hpp"
 
 using namespace std;
 ofstream fout;
@@ -67,6 +73,30 @@ bool readInterpolationInput(const string& path, vector<double>& xs,
     for (int i = 0; i < n; ++i)
         fin >> xs[i] >> ys[i];
     fin >> xQuery;
+    return true;
+}
+
+// Read differentiation input file
+// Format:
+//   x0
+//   count_of_h_values
+//   h1 h2 h3 ...
+bool readDifferentiationInput(const string& path, double& x0, vector<double>& hVals) {
+    ifstream fin(path);
+    if (!fin) return false;
+    string line;
+    vector<double> tokens;
+    while (getline(fin, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        stringstream ss(line);
+        double v;
+        while (ss >> v) tokens.push_back(v);
+    }
+    if (tokens.size() < 2) return false;
+    x0 = tokens[0];
+    int count = (int)tokens[1];
+    if ((int)tokens.size() < 2 + count) return false;
+    hVals.assign(tokens.begin() + 2, tokens.begin() + 2 + count);
     return true;
 }
 
@@ -324,6 +354,89 @@ void runInterpolation() {
     }
 }
 
+// ── NUMERICAL DIFFERENTIATION ───────────────────────────────────────────────
+void runDifferentiation() {
+    printSeparator("NUMERICAL DIFFERENTIATION");
+
+    write("Theory:\n");
+    write("  Forward:  f'(x) ~= [f(x+h) - f(x)] / h          -- O(h)\n");
+    write("  Backward: f'(x) ~= [f(x) - f(x-h)] / h           -- O(h)\n");
+    write("  Central:  f'(x) ~= [f(x+h) - f(x-h)] / (2h)      -- O(h^2)\n\n");
+
+    double x0;
+    vector<double> hVals;
+    if (!readDifferentiationInput("input/input_differentiation.txt", x0, hVals)) {
+        write("[ERROR] Cannot open/parse input/input_differentiation.txt\n");
+        write("        Expected format:\n");
+        write("          x0\n");
+        write("          count_of_h_values\n");
+        write("          h1 h2 h3 ...\n");
+        return;
+    }
+
+    char buf[128];
+    snprintf(buf, sizeof(buf), "Evaluation point x0 = %.6f\n", x0);
+    write(string(buf));
+    write("Step sizes h = [ ");
+    for (double h : hVals) { snprintf(buf, sizeof(buf), "%.0e ", h); write(string(buf)); }
+    write("]\n\n");
+
+    write("Choose test function(s):\n");
+    write("  1. f(x) = e^x\n");
+    write("  2. f(x) = sin(x)\n");
+    write("  3. f(x) = x^3 - 2x + 1\n");
+    write("  4. All three (recommended -- matches assignment spec)\n");
+    write("Enter choice: ");
+    int fchoice; cin >> fchoice;
+    write("\n");
+
+    DifferentiationAnalyzer analyzer(x0, hVals);
+
+    if (fchoice == 1 || fchoice == 4)
+        analyzer.addFunction("exp",
+            [](double x){ return exp(x); },
+            [](double x){ return exp(x); });
+    if (fchoice == 2 || fchoice == 4)
+        analyzer.addFunction("sin",
+            [](double x){ return sin(x); },
+            [](double x){ return cos(x); });
+    if (fchoice == 3 || fchoice == 4)
+        analyzer.addFunction("poly",
+            [](double x){ return x*x*x - 2*x + 1; },
+            [](double x){ return 3*x*x - 2; });
+
+    if (fchoice < 1 || fchoice > 4) {
+        write("  [Error] Invalid choice.\n");
+        return;
+    }
+
+    analyzer.run();
+
+    // Results table (console + output/output.txt, via write())
+    ostringstream tableStream;
+    analyzer.printTable(tableStream);
+    write(tableStream.str());
+
+    // Written analysis answering: most accurate method / observed order / round-off floor
+    ostringstream analysisStream;
+    analyzer.printAnalysis(analysisStream);
+    write(analysisStream.str());
+
+    // CSV + gnuplot log-log plot, written to output/
+    filesystem::create_directories("output");
+    analyzer.writeCSV("output/differentiation_results.csv");
+    analyzer.writeGnuplotFiles("output/diff_data", "output/plot.gp",
+                                "output/loglog_error_plot.png");
+    bool plotted = analyzer.renderPlot("output/plot.gp");
+
+    write("\nFull results table written to output/differentiation_results.csv\n");
+    if (plotted)
+        write("Log-log error plot written to output/loglog_error_plot.png\n");
+    else
+        write("[!] gnuplot not found or failed. Install gnuplot, then run:\n"
+              "    gnuplot output/plot.gp\n");
+}
+
 // ── LEAST SQUARES ─────────────────────────────────────────────────────────────
 void runLeastSquares() {
     printSeparator("LEAST SQUARES METHOD");
@@ -478,10 +591,14 @@ int main() {
     cout << "  1. Matrix Operations  (Det / Inverse / SLE / Eigenvalues)\n";
     cout << "  2. Interpolation      (Lagrange)\n";
     cout << "  3. Least Squares      (Linear Fit  y = ax + b)\n";
+    cout << "  4. Numerical Differentiation (Forward / Backward / Central)\n";
     cout << "Enter choice: ";
     int category; cin >> category;
 
-    if (category == 3) {
+    if (category == 4) {
+        runDifferentiation();
+    }
+    else if (category == 3) {
         runLeastSquares();
     }
     else if (category == 2) {
@@ -571,7 +688,6 @@ int main() {
     cout << "\nOutput saved to output/output.txt\n";
     return 0;
 }
-
 
 
 

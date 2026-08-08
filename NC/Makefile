@@ -16,7 +16,13 @@ SRCS     = main.cpp \
            src/EigenValue.cpp \
            src/Interpolation.cpp \
            src/Lagrange.cpp \
-           src/LeastSquares.cpp
+           src/LeastSquares.cpp \
+           src/Differentiation.cpp \
+           src/ForwardDifference.cpp \
+           src/BackwardDifference.cpp \
+           src/CentralDifference.cpp \
+           src/CentralSecondDerivative.cpp \
+           src/DifferentiationAnalyzer.cpp
 
 OBJS     = $(SRCS:.cpp=.o)
 
