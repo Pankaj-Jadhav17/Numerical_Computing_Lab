@@ -1,0 +1,7 @@
+# Numerical Differentiation input
+# line 1: x0 (evaluation point)
+# line 2: number of h values
+# line 3: h1 h2 h3 ... (space separated)
+1.0
+8
+1e-1 1e-2 1e-3 1e-4 1e-5 1e-6 1e-7 1e-8
