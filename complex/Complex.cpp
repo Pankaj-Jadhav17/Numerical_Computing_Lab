@@ -1,9 +1,7 @@
- #include<iostream>
- #include<cmath>
- #include"../include/myComplex.hpp"
- 
- 
- 
+#include<iostream>
+#include<cmath>
+#include"myComplex.hpp"
+
     myComplex::myComplex()
     {
         std::cout << "Default Constructor Called" << std::endl;
