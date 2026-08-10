@@ -1,0 +1,9 @@
+# Richardson Extrapolation input (Assignment III)
+# line 1: x0 (evaluation point)
+# line 2: number of h values
+# line 3: h1 h2 h3 ... (space separated)
+# Extended down to 1e-10 to make the round-off floor visible for both
+# Central Difference D(h) and Richardson Extrapolation R(h).
+1.0
+10
+1e-1 1e-2 1e-3 1e-4 1e-5 1e-6 1e-7 1e-8 1e-9 1e-10
