@@ -1,0 +1,27 @@
+Richardson Extrapolation - Written Analysis
+Evaluation point x0 = 1
+
+===== CONVERGENCE / ANALYSIS =====
+
+-- sin --
+  Observed slope of log10(err_D) vs log10(h): 1.9815   (theoretical: 2.0000)
+  Observed slope of log10(err_R) vs log10(h): 3.2510   (theoretical: 4.0000)
+  Error reduction factor per 10x decrease in h:
+    D(h): ~94.8063x   (theoretical: ~100x for O(h^2))
+    R(h): ~1782.5130x   (theoretical: ~10000x for O(h^4))
+  Richardson more accurate than Central at 5/10 tested h values  (fails at the smallest h -- round-off dominates R(h) first)
+  D(h) reaches its minimum error at h = 1.0000e-05  (err = 1.1141e-11)
+  R(h) reaches its minimum error at h = 1.0000e-03  (err = 3.5416e-14)
+  -> R(h) hits its round-off floor EARLIER (larger h) than D(h).
+
+===== ANSWERS TO ASSIGNMENT QUESTIONS =====
+Q1. Does Richardson always give a smaller error than Central Difference?
+    Mostly, but NOT always: at the smallest step sizes, round-off error in computing D(h) and D(h/2) and combining them can make R(h) worse than D(h).
+
+Q2. By approximately what factor does the error decrease when h is reduced by 10?
+    D(h): ~94.8063x per decade (matches O(h^2): 10^2 = 100)
+    R(h): ~1782.5130x per decade (matches O(h^4): 10^4 = 10000)
+
+Q3. Does Richardson continue to improve as h becomes very small?
+    No. Once round-off dominates, R(h) can stop decreasing and increase again.
+

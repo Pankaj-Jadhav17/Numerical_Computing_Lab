@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <filesystem>
 #include <sstream>
+#include <map>
+#include <functional>
 #include "include/Matrix.hpp"
 #include "include/GaussElimination.hpp"
 #include "include/GaussJacobi.hpp"
@@ -24,6 +26,299 @@
 #include "include/DifferentiationAnalyzer.hpp"
 
 using namespace std;
+
+struct RichardsonResultRow {
+    string function;
+    double h;
+    double D_h;
+    double R_h;
+    double exact;
+    double errD;
+    double errR;
+};
+
+class RichardsonAnalyzer {
+private:
+    struct TestCase {
+        string name;
+        function<double(double)> f;
+        function<double(double)> fExact;
+    };
+
+    double x0;
+    vector<double> hValues;
+    vector<TestCase> testFunctions;
+    vector<RichardsonResultRow> results;
+
+    static void groupByFunction(const vector<RichardsonResultRow>& rows,
+                                vector<string>& order,
+                                map<string, vector<const RichardsonResultRow*>>& byFunc) {
+        for (const auto& r : rows) {
+            if (byFunc.find(r.function) == byFunc.end()) order.push_back(r.function);
+            byFunc[r.function].push_back(&r);
+        }
+    }
+
+    static double logLogSlope(const vector<const RichardsonResultRow*>& rows, bool useD) {
+        auto errOf = [&](const RichardsonResultRow* r) { return useD ? r->errD : r->errR; };
+        size_t n = 1;
+        while (n < rows.size() && errOf(rows[n]) < errOf(rows[n - 1])) ++n;
+        if (n < 2) n = min(rows.size(), (size_t)2);
+
+        vector<double> X, Y;
+        for (size_t i = 0; i < n; ++i) {
+            double e = errOf(rows[i]);
+            if (e <= 0.0) continue;
+            X.push_back(log10(rows[i]->h));
+            Y.push_back(log10(e));
+        }
+        if (X.size() < 2) return 0.0;
+
+        double xMean = 0, yMean = 0;
+        for (size_t i = 0; i < X.size(); ++i) { xMean += X[i]; yMean += Y[i]; }
+        xMean /= X.size(); yMean /= Y.size();
+
+        double num = 0, den = 0;
+        for (size_t i = 0; i < X.size(); ++i) {
+            num += (X[i] - xMean) * (Y[i] - yMean);
+            den += (X[i] - xMean) * (X[i] - xMean);
+        }
+        return (den != 0.0) ? num / den : 0.0;
+    }
+
+public:
+    RichardsonAnalyzer(double evalPoint, const vector<double>& hVals)
+        : x0(evalPoint), hValues(hVals) {}
+
+    void addFunction(const string& name,
+                     function<double(double)> f,
+                     function<double(double)> fExact) {
+        testFunctions.push_back({name, f, fExact});
+    }
+
+    void run() {
+        results.clear();
+        for (const auto& tc : testFunctions) {
+            double exact = tc.fExact(x0);
+            for (double h : hValues) {
+                CentralDifference cd_h(tc.f, h);
+                CentralDifference cd_half(tc.f, h / 2.0);
+
+                double D_h = cd_h.derivative(x0);
+                double D_half = cd_half.derivative(x0);
+                double R_h = (4.0 * D_half - D_h) / 3.0;
+
+                RichardsonResultRow row;
+                row.function = tc.name;
+                row.h = h;
+                row.D_h = D_h;
+                row.R_h = R_h;
+                row.exact = exact;
+                row.errD = Differentiation::absoluteError(exact, D_h);
+                row.errR = Differentiation::absoluteError(exact, R_h);
+                results.push_back(row);
+            }
+        }
+    }
+
+    const vector<RichardsonResultRow>& getResults() const { return results; }
+
+    void printTable(ostream& out) const {
+        out << scientific << setprecision(6);
+        out << left
+            << setw(8)  << "func"
+            << setw(12) << "h"
+            << setw(16) << "D(h)"
+            << setw(16) << "R(h)"
+            << setw(16) << "exact"
+            << setw(16) << "err_D(h)"
+            << setw(16) << "err_R(h)" << "\n";
+
+        for (const auto& r : results) {
+            out << left
+                << setw(8)  << r.function
+                << setw(12) << r.h
+                << setw(16) << r.D_h
+                << setw(16) << r.R_h
+                << setw(16) << r.exact
+                << setw(16) << r.errD
+                << setw(16) << r.errR << "\n";
+        }
+    }
+
+    void writeTable(const string& path) const {
+        ofstream out(path);
+        out << "Richardson Extrapolation vs Central Difference - Results Table\n";
+        out << "Evaluation point x0 = " << x0 << "\n\n";
+        printTable(out);
+    }
+
+    void writeCSV(const string& path) const {
+        ofstream csv(path);
+        csv << "function,h,D_h,R_h,exact,err_D,err_R\n";
+        csv << scientific << setprecision(8);
+        for (const auto& r : results) {
+            csv << r.function << "," << r.h << "," << r.D_h << "," << r.R_h << ","
+                << r.exact << "," << r.errD << "," << r.errR << "\n";
+        }
+    }
+
+    void writeGnuplotFiles(const string& dataPrefix,
+                          const string& scriptPath,
+                          const string& outputImage) const {
+        auto safeLog = [](double v) { return log10(v > 0 ? v : 1e-20); };
+
+        vector<string> order;
+        map<string, vector<const RichardsonResultRow*>> byFunc;
+        groupByFunction(results, order, byFunc);
+
+        for (const auto& fname : order) {
+            ofstream dat(dataPrefix + "_" + fname + ".dat");
+            dat << "# log10(h)  log10(err_D)  log10(err_R)\n";
+            for (const auto* r : byFunc[fname]) {
+                dat << safeLog(r->h) << " " << safeLog(r->errD) << " "
+                    << safeLog(r->errR) << "\n";
+            }
+        }
+
+        ofstream gp(scriptPath);
+        gp << "set terminal pngcairo size 1000,700 enhanced font 'Verdana,10'\n";
+        gp << "set output '" << outputImage << "'\n";
+        gp << "set title 'Log-Log Error Plot: Central Difference D(h) vs Richardson R(h)'\n";
+        gp << "set xlabel 'log10(h)'\n";
+        gp << "set ylabel 'log10(|error|)'\n";
+        gp << "set grid\n";
+        gp << "set key outside right\n";
+        gp << "plot \\\n";
+        bool first = true;
+        for (const auto& fname : order) {
+            string file = dataPrefix + "_" + fname + ".dat";
+            if (!first) gp << ", \\\n";
+            gp << "  '" << file << "' using 1:2 with linespoints title '" << fname << " D(h) [O(h^2)]'";
+            gp << ", \\\n  '" << file << "' using 1:3 with linespoints title '" << fname << " R(h) [O(h^4)]'";
+            first = false;
+        }
+        gp << "\n";
+    }
+
+    bool renderPlot(const string& scriptPath) const {
+        string cmd = "gnuplot " + scriptPath;
+        return system(cmd.c_str()) == 0;
+    }
+
+    void printAnalysis(ostream& out) const {
+        out << fixed << setprecision(4);
+        out << "\n===== CONVERGENCE / ANALYSIS =====\n";
+
+        vector<string> order;
+        map<string, vector<const RichardsonResultRow*>> byFunc;
+        groupByFunction(results, order, byFunc);
+
+        bool richardsonAlwaysBetter = true;
+        double totalRatioD = 0, totalRatioR = 0;
+        int countRatioD = 0, countRatioR = 0;
+
+        for (const auto& fname : order) {
+            const auto& rows = byFunc[fname];
+            out << "\n-- " << fname << " --\n";
+
+            double slopeD = logLogSlope(rows, true);
+            double slopeR = logLogSlope(rows, false);
+            out << "  Observed slope of log10(err_D) vs log10(h): " << slopeD
+                << "   (theoretical: 2.0000)\n";
+
+            bool richardsonExact = (rows.front()->errR < 1e-9);
+            if (richardsonExact) {
+                out << "  Observed slope of log10(err_R) vs log10(h): N/A -- R(h) is already at "
+                    "machine-precision (~" << scientific << rows.front()->errR << fixed
+                    << ") even at the LARGEST h tested.\n";
+            } else {
+                out << "  Observed slope of log10(err_R) vs log10(h): " << slopeR
+                    << "   (theoretical: 4.0000)\n";
+            }
+
+            size_t nD = 1; while (nD < rows.size() && rows[nD]->errD < rows[nD - 1]->errD) ++nD;
+            size_t nR = 1; while (nR < rows.size() && rows[nR]->errR < rows[nR - 1]->errR) ++nR;
+
+            double logRatioD = 0; int kD = 0;
+            for (size_t i = 1; i < nD; ++i) {
+                if (rows[i]->errD > 0 && rows[i-1]->errD > 0) {
+                    logRatioD += log10(rows[i-1]->errD / rows[i]->errD);
+                    ++kD;
+                }
+            }
+            double logRatioR = 0; int kR = 0;
+            for (size_t i = 1; i < nR; ++i) {
+                if (rows[i]->errR > 0 && rows[i-1]->errR > 0) {
+                    logRatioR += log10(rows[i-1]->errR / rows[i]->errR);
+                    ++kR;
+                }
+            }
+            double factorD = (kD > 0) ? pow(10.0, logRatioD / kD) : 0.0;
+            double factorR = (kR > 0) ? pow(10.0, logRatioR / kR) : 0.0;
+            out << "  Error reduction factor per 10x decrease in h:\n";
+            out << "    D(h): ~" << factorD << "x   (theoretical: ~100x for O(h^2))\n";
+            if (richardsonExact) {
+                out << "    R(h): N/A -- already at machine precision.\n";
+            } else {
+                out << "    R(h): ~" << factorR << "x   (theoretical: ~10000x for O(h^4))\n";
+            }
+            totalRatioD += factorD;
+            if (!richardsonExact) { totalRatioR += factorR; ++countRatioR; }
+            ++countRatioD;
+
+            int exceptions = 0;
+            for (const auto* r : rows) if (r->errR >= r->errD) ++exceptions;
+            if (exceptions > 0) richardsonAlwaysBetter = false;
+            out << "  Richardson more accurate than Central at " << (rows.size() - exceptions)
+                << "/" << rows.size() << " tested h values"
+                << (exceptions > 0 ? "  (fails at the smallest h -- round-off dominates R(h) first)" : "")
+                << "\n";
+
+            size_t minD = 0, minR = 0;
+            for (size_t i = 1; i < rows.size(); ++i) {
+                if (rows[i]->errD < rows[minD]->errD) minD = i;
+                if (rows[i]->errR < rows[minR]->errR) minR = i;
+            }
+            out << "  D(h) reaches its minimum error at h = " << scientific << rows[minD]->h
+                << "  (err = " << rows[minD]->errD << ")\n";
+            out << "  R(h) reaches its minimum error at h = " << rows[minR]->h
+                << "  (err = " << rows[minR]->errR << ")\n";
+            out << fixed;
+            if (minR > minD)
+                out << "  -> R(h) keeps improving to a SMALLER h than D(h) before round-off takes over.\n";
+            else if (minR < minD)
+                out << "  -> R(h) hits its round-off floor EARLIER (larger h) than D(h).\n";
+            else
+                out << "  -> D(h) and R(h) hit their round-off floor at about the same h.\n";
+        }
+
+        double avgFactorD = countRatioD ? totalRatioD / countRatioD : 0.0;
+        double avgFactorR = countRatioR ? totalRatioR / countRatioR : 0.0;
+
+        out << "\n===== ANSWERS TO ASSIGNMENT QUESTIONS =====\n";
+        out << "Q1. Does Richardson always give a smaller error than Central Difference?\n";
+        out << "    " << (richardsonAlwaysBetter
+                ? "Yes, across every h tested for every function."
+                : "Mostly, but NOT always: at the smallest step sizes, round-off error in computing D(h) and D(h/2) and combining them can make R(h) worse than D(h).")
+            << "\n\n";
+
+        out << "Q2. By approximately what factor does the error decrease when h is reduced by 10?\n";
+        out << "    D(h): ~" << avgFactorD << "x per decade (matches O(h^2): 10^2 = 100)\n";
+        out << "    R(h): ~" << avgFactorR << "x per decade (matches O(h^4): 10^4 = 10000)\n\n";
+
+        out << "Q3. Does Richardson continue to improve as h becomes very small?\n";
+        out << "    No. Once round-off dominates, R(h) can stop decreasing and increase again.\n\n";
+    }
+
+    void writeAnalysis(const string& path) const {
+        ofstream out(path);
+        out << "Richardson Extrapolation - Written Analysis\n";
+        out << "Evaluation point x0 = " << x0 << "\n";
+        printAnalysis(out);
+    }
+};
+
 ofstream fout;
 
 // Output helper: writes to both cout and output file
@@ -76,7 +371,7 @@ bool readInterpolationInput(const string& path, vector<double>& xs,
     return true;
 }
 
-// Read differentiation input file
+// Read differentiation-family input files (shared format)
 // Format:
 //   x0
 //   count_of_h_values
@@ -412,7 +707,7 @@ void runDifferentiation() {
 
     analyzer.run();
 
-    // Results table (console + output/output.txt, via write())
+    // Results table (console + shared output/output.txt, via write())
     ostringstream tableStream;
     analyzer.printTable(tableStream);
     write(tableStream.str());
@@ -422,19 +717,117 @@ void runDifferentiation() {
     analyzer.printAnalysis(analysisStream);
     write(analysisStream.str());
 
-    // CSV + gnuplot log-log plot, written to output/
+    // ---- All differentiation outputs saved under output/, in proper formats ----
     filesystem::create_directories("output");
     analyzer.writeCSV("output/differentiation_results.csv");
     analyzer.writeGnuplotFiles("output/diff_data", "output/plot.gp",
                                 "output/loglog_error_plot.png");
     bool plotted = analyzer.renderPlot("output/plot.gp");
 
-    write("\nFull results table written to output/differentiation_results.csv\n");
+    write("\nSaved to output/:\n");
+    write("  differentiation_results.csv   (raw results, CSV)\n");
+    write("  differentiation_analysis.txt  (written analysis)\n");
+    write("  diff_data_<func>.dat + plot.gp (gnuplot source data/script)\n");
     if (plotted)
-        write("Log-log error plot written to output/loglog_error_plot.png\n");
+        write("  loglog_error_plot.png         (log-log error graph)\n");
     else
-        write("[!] gnuplot not found or failed. Install gnuplot, then run:\n"
-              "    gnuplot output/plot.gp\n");
+        write("  [!] loglog_error_plot.png NOT generated -- gnuplot not found.\n"
+              "      Install gnuplot, then run: gnuplot output/plot.gp\n");
+}
+
+// ── RICHARDSON EXTRAPOLATION (Assignment III) ───────────────────────────────
+void runRichardson() {
+    printSeparator("RICHARDSON EXTRAPOLATION -- INVESTIGATION");
+
+    write("Theory:\n");
+    write("  Central Difference: D(h) = [f(x+h) - f(x-h)] / (2h)      -- O(h^2)\n");
+    write("  Richardson:         R(h) = [4*D(h/2) - D(h)] / 3         -- O(h^4)\n");
+    write("  (Richardson eliminates the leading h^2 error term of D(h).)\n\n");
+
+    double x0;
+    vector<double> hVals;
+    if (!readDifferentiationInput("input/input_richardson.txt", x0, hVals)) {
+        write("[ERROR] Cannot open/parse input/input_richardson.txt\n");
+        write("        Expected format:\n");
+        write("          x0\n");
+        write("          count_of_h_values\n");
+        write("          h1 h2 h3 ...\n");
+        return;
+    }
+
+    char buf[128];
+    snprintf(buf, sizeof(buf), "Evaluation point x0 = %.6f\n", x0);
+    write(string(buf));
+    write("Step sizes h = [ ");
+    for (double h : hVals) { snprintf(buf, sizeof(buf), "%.0e ", h); write(string(buf)); }
+    write("]\n\n");
+
+    write("Choose test function(s):\n");
+    write("  1. f(x) = e^x\n");
+    write("  2. f(x) = sin(x)\n");
+    write("  3. f(x) = cos(x)\n");
+    write("  4. f(x) = x^3 - 2x + 1\n");
+    write("  5. All four (recommended -- matches assignment spec)\n");
+    write("Enter choice: ");
+    int fchoice; cin >> fchoice;
+    write("\n");
+
+    RichardsonAnalyzer analyzer(x0, hVals);
+
+    if (fchoice == 1 || fchoice == 5)
+        analyzer.addFunction("exp",
+            [](double x){ return exp(x); },
+            [](double x){ return exp(x); });
+    if (fchoice == 2 || fchoice == 5)
+        analyzer.addFunction("sin",
+            [](double x){ return sin(x); },
+            [](double x){ return cos(x); });
+    if (fchoice == 3 || fchoice == 5)
+        analyzer.addFunction("cos",
+            [](double x){ return cos(x); },
+            [](double x){ return -sin(x); });
+    if (fchoice == 4 || fchoice == 5)
+        analyzer.addFunction("poly",
+            [](double x){ return x*x*x - 2*x + 1; },
+            [](double x){ return 3*x*x - 2; });
+
+    if (fchoice < 1 || fchoice > 5) {
+        write("  [Error] Invalid choice.\n");
+        return;
+    }
+
+    analyzer.run();
+
+    // Results table (console + shared output/output.txt, via write())
+    ostringstream tableStream;
+    analyzer.printTable(tableStream);
+    write(tableStream.str());
+
+    // Written analysis: slopes, error-reduction factors, round-off floor, Q1-Q6
+    ostringstream analysisStream;
+    analyzer.printAnalysis(analysisStream);
+    write(analysisStream.str());
+
+    // ---- All Richardson outputs saved under output/, in proper formats ----
+    filesystem::create_directories("output");
+
+    analyzer.writeTable("output/richardson_table.txt");
+    analyzer.writeCSV("output/richardson_results.csv");
+    analyzer.writeAnalysis("output/richardson_analysis.txt");
+    analyzer.writeGnuplotFiles("output/richardson_data", "output/richardson_plot.gp",
+                                "output/richardson_loglog_plot.png");
+    bool plotted = analyzer.renderPlot("output/richardson_plot.gp");
+
+    write("\nSaved to output/:\n");
+    write("  richardson_table.txt              (formatted results table: D(h), R(h), errors)\n");
+    write("  richardson_results.csv            (raw results, CSV)\n");
+    write("  richardson_analysis.txt           (written analysis + Q1-Q6 answers)\n");
+    write("  richardson_data_<func>.dat + richardson_plot.gp (gnuplot source)\n");
+    if (plotted)
+        write("  richardson_loglog_plot.png        (log-log error graph: D(h) vs R(h))\n");
+    else
+        write("  [!] richardson_loglog_plot.png NOT generated -- gnuplot not found.\n"
+              "      Install gnuplot, then run: gnuplot output/richardson_plot.gp\n");
 }
 
 // ── LEAST SQUARES ─────────────────────────────────────────────────────────────
@@ -592,10 +985,14 @@ int main() {
     cout << "  2. Interpolation      (Lagrange)\n";
     cout << "  3. Least Squares      (Linear Fit  y = ax + b)\n";
     cout << "  4. Numerical Differentiation (Forward / Backward / Central)\n";
+    cout << "  5. Richardson Extrapolation  (D(h) vs R(h) -- Assignment III)\n";
     cout << "Enter choice: ";
     int category; cin >> category;
 
-    if (category == 4) {
+    if (category == 5) {
+        runRichardson();
+    }
+    else if (category == 4) {
         runDifferentiation();
     }
     else if (category == 3) {

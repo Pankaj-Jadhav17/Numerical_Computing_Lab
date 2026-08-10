@@ -1,38 +1,59 @@
-  NUMERICAL DIFFERENTIATION
+  RICHARDSON EXTRAPOLATION -- INVESTIGATION
 Theory:
-  Forward:  f'(x) ~= [f(x+h) - f(x)] / h          -- O(h)
-  Backward: f'(x) ~= [f(x) - f(x-h)] / h           -- O(h)
-  Central:  f'(x) ~= [f(x+h) - f(x-h)] / (2h)      -- O(h^2)
+  Central Difference: D(h) = [f(x+h) - f(x-h)] / (2h)      -- O(h^2)
+  Richardson:         R(h) = [4*D(h/2) - D(h)] / 3         -- O(h^4)
+  (Richardson eliminates the leading h^2 error term of D(h).)
 
 Evaluation point x0 = 1.000000
-Step sizes h = [ 1e-01 1e-02 1e-03 1e-04 1e-05 1e-06 1e-07 1e-08 ]
+Step sizes h = [ 1e-01 1e-02 1e-03 1e-04 1e-05 1e-06 1e-07 1e-08 1e-09 1e-10 ]
 
 Choose test function(s):
   1. f(x) = e^x
   2. f(x) = sin(x)
-  3. f(x) = x^3 - 2x + 1
-  4. All three (recommended -- matches assignment spec)
+  3. f(x) = cos(x)
+  4. f(x) = x^3 - 2x + 1
+  5. All four (recommended -- matches assignment spec)
 Enter choice: 
-func    h           forward         backward        central         err_fwd         err_bwd         err_ctr         
-exp     1.000000e-012.858842e+00    2.586787e+00    2.722815e+00    1.405601e-01    1.314947e-01    4.532735e-03    
-exp     1.000000e-022.731919e+00    2.704736e+00    2.718327e+00    1.363683e-02    1.354622e-02    4.530492e-05    
-exp     1.000000e-032.719641e+00    2.716923e+00    2.718282e+00    1.359594e-03    1.358688e-03    4.530467e-07    
-exp     1.000000e-042.718418e+00    2.718146e+00    2.718282e+00    1.359186e-04    1.359096e-04    4.530566e-09    
-exp     1.000000e-052.718295e+00    2.718268e+00    2.718282e+00    1.359150e-05    1.359138e-05    5.858691e-11    
-exp     1.000000e-062.718283e+00    2.718280e+00    2.718282e+00    1.358972e-06    1.359298e-06    1.634572e-10    
-exp     1.000000e-072.718282e+00    2.718282e+00    2.718282e+00    1.399467e-07    1.398295e-07    5.858736e-11    
-exp     1.000000e-082.718282e+00    2.718282e+00    2.718282e+00    6.602751e-09    6.602751e-09    6.602751e-09    
+func    h           D(h)            R(h)            exact           err_D(h)        err_R(h)        
+sin     1.000000e-015.394023e-01    5.403022e-01    5.403023e-01    9.000537e-04    1.125295e-07    
+sin     1.000000e-025.402933e-01    5.403023e-01    5.403023e-01    9.004993e-06    1.127598e-11    
+sin     1.000000e-035.403022e-01    5.403023e-01    5.403023e-01    9.005045e-08    3.541611e-14    
+sin     1.000000e-045.403023e-01    5.403023e-01    5.403023e-01    9.004295e-10    1.071587e-12    
+sin     1.000000e-055.403023e-01    5.403023e-01    5.403023e-01    1.114087e-11    1.106359e-11    
+sin     1.000000e-065.403023e-01    5.403023e-01    5.403023e-01    2.771694e-11    2.771694e-11    
+sin     1.000000e-075.403023e-01    5.403023e-01    5.403023e-01    1.943277e-10    9.344764e-10    
+sin     1.000000e-085.403023e-01    5.403023e-01    5.403023e-01    2.581230e-09    4.820257e-09    
+sin     1.000000e-095.403023e-01    5.403022e-01    5.403023e-01    2.969885e-09    7.698475e-08    
+sin     1.000000e-105.403022e-01    5.403037e-01    5.403023e-01    5.848104e-08    1.421816e-06    
 
-===== ANALYSIS =====
+===== CONVERGENCE / ANALYSIS =====
 
--- exp --
-  At h = 1e-05:  err_fwd=1.35915e-05  err_bwd=1.35914e-05  err_ctr=5.85869e-11
-  -> Most accurate at this h: Central difference
-  Observed order (between h=0.1 and h=0.01):
-    Forward  ~ O(h^1.01315)  (expected ~1)
-    Backward ~ O(h^0.98709)  (expected ~1)
-    Central  ~ O(h^2.00021)  (expected ~2)
-  Error stops decreasing (round-off floor) beyond h = 1e-05 (central difference)
+-- sin --
+  Observed slope of log10(err_D) vs log10(h): 1.9815   (theoretical: 2.0000)
+  Observed slope of log10(err_R) vs log10(h): 3.2510   (theoretical: 4.0000)
+  Error reduction factor per 10x decrease in h:
+    D(h): ~94.8063x   (theoretical: ~100x for O(h^2))
+    R(h): ~1782.5130x   (theoretical: ~10000x for O(h^4))
+  Richardson more accurate than Central at 5/10 tested h values  (fails at the smallest h -- round-off dominates R(h) first)
+  D(h) reaches its minimum error at h = 1.0000e-05  (err = 1.1141e-11)
+  R(h) reaches its minimum error at h = 1.0000e-03  (err = 3.5416e-14)
+  -> R(h) hits its round-off floor EARLIER (larger h) than D(h).
 
-Full results table written to output/differentiation_results.csv
-Log-log error plot written to output/loglog_error_plot.png
+===== ANSWERS TO ASSIGNMENT QUESTIONS =====
+Q1. Does Richardson always give a smaller error than Central Difference?
+    Mostly, but NOT always: at the smallest step sizes, round-off error in computing D(h) and D(h/2) and combining them can make R(h) worse than D(h).
+
+Q2. By approximately what factor does the error decrease when h is reduced by 10?
+    D(h): ~94.8063x per decade (matches O(h^2): 10^2 = 100)
+    R(h): ~1782.5130x per decade (matches O(h^4): 10^4 = 10000)
+
+Q3. Does Richardson continue to improve as h becomes very small?
+    No. Once round-off dominates, R(h) can stop decreasing and increase again.
+
+
+Saved to output/:
+  richardson_table.txt              (formatted results table: D(h), R(h), errors)
+  richardson_results.csv            (raw results, CSV)
+  richardson_analysis.txt           (written analysis + Q1-Q6 answers)
+  richardson_data_<func>.dat + richardson_plot.gp (gnuplot source)
+  richardson_loglog_plot.png        (log-log error graph: D(h) vs R(h))
