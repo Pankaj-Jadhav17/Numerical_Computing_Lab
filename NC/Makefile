@@ -22,7 +22,9 @@ SRCS     = main.cpp \
            src/BackwardDifference.cpp \
            src/CentralDifference.cpp \
            src/CentralSecondDerivative.cpp \
-           src/DifferentiationAnalyzer.cpp
+           src/DifferentiationAnalyzer.cpp \
+           src/RichardsonExtrapolation.cpp \
+           src/RichardsonAnalyzer.cpp
 
 OBJS     = $(SRCS:.cpp=.o)
 

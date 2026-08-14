@@ -16,14 +16,6 @@ struct DiffResultRow {
     double errForward, errBackward, errCentral;
 };
 
-// Registers test functions, runs Forward/Backward/Central difference
-// (via the Differentiation hierarchy) across a list of step sizes h,
-// and reports results as a table / CSV / gnuplot log-log plot.
-//
-// This class does NOT inherit Matrix or Differentiation — it is a
-// driver/orchestrator, analogous to the free functions in main.cpp
-// (runSolve, runEigenvalues, runLeastSquares) but packaged as a
-// reusable class since it holds state (results) across multiple calls.
 class DifferentiationAnalyzer {
 private:
     struct TestCase {
@@ -54,8 +46,6 @@ public:
     void printTable(ostream& out) const;
     void writeCSV(const string& path) const;
 
-    // Writes one .dat file per function (log10(h), log10(err_fwd/bwd/ctr))
-    // plus a plot.gp gnuplot script, matching data file naming "prefix_<fn>.dat"
     void writeGnuplotFiles(const string& dataPrefix,
                             const string& scriptPath,
                             const string& outputImage) const;
