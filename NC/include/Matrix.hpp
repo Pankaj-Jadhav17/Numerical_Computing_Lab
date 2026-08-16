@@ -1,6 +1,5 @@
 #ifndef MATRIX_HPP
 #define MATRIX_HPP
-
 #include <vector>
 #include <iostream>
 #include <fstream>

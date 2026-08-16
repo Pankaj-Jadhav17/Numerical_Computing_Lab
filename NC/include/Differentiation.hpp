@@ -5,7 +5,6 @@
 using namespace std;
 
 class Differentiation {
-
 protected:
     function<double(double)> func;   // the function f(x) being differentiated
     double h;                        // step size
