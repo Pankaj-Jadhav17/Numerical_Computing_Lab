@@ -6,11 +6,10 @@ Differentiation::Differentiation(function<double(double)> f, double stepSize)
     : func(f), h(stepSize)
 {
     if (!func)
-        throw invalid_argument("Differentiation: function object is empty.");
+        throw invalid_argument("Function object is empty.");
     if (h <= 0.0)
-        throw invalid_argument("Differentiation: step size h must be positive.");
+        throw invalid_argument("Step size h must be positive.");
 }
-
 double Differentiation::absoluteError(double exact, double approx) {
-    return fabs(exact - approx);
+    return fabs(exact - approx); // absolute error is always non-negative
 }
