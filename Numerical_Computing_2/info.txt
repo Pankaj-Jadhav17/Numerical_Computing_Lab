@@ -1,0 +1,17 @@
+Numerical Computing Project
+
+Run:
+python3 main.py
+
+Install:
+pip install -r requirements.txt
+
+The program contains:
+1. Forward Difference
+2. Backward Difference
+3. Central Difference
+4. Central Second Derivative
+5. Richardson Extrapolation
+
+Input files are stored in input/.
+Generated results are stored in output/.

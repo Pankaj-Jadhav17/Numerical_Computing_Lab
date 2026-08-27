@@ -1,0 +1,10 @@
+Numerical Differentiation Analysis
+Evaluation point: 1.0
+
+===== ANALYSIS =====
+
+Function: exp
+At h = 1e-06: Forward Error = 1.359e-06, Backward Error = 1.359e-06, Central Error = 1.635e-10
+Most accurate method: Central
+Observed order: Forward = 1.013, Backward = 0.987, Central = 2.000
+Minimum Central Difference error: 5.859e-11 at h = 1e-05
