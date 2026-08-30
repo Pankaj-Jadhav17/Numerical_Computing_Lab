@@ -1,0 +1,29 @@
+Richardson Extrapolation Analysis
+Evaluation point: 1.0
+
+===== RICHARDSON ANALYSIS =====
+
+Function: exp
+Observed order: Central = 2.000, Richardson = 4.000
+Richardson is more accurate for 5 out of 10 tested h values.
+Minimum Central error: 5.859e-11 at h = 1e-05
+Minimum Richardson error: 4.023e-13 at h = 1e-03
+
+===== ASSIGNMENT QUESTIONS =====
+Q1. Does Richardson always give a smaller error than Central Difference?
+Richardson usually gives a smaller truncation error, but it may not always be better when h becomes very small because round-off error can dominate.
+
+Q2. What happens when h is reduced by 10?
+For Central Difference, the theoretical error decreases by about 100 times. For Richardson, the theoretical error decreases by about 10000 times.
+
+Q3. Does Richardson continue to improve for very small h?
+No. Floating-point round-off error eventually becomes important and the total error can increase.
+
+Q4. Does the log-log slope support the theory?
+The slope should be close to 2 for Central Difference and close to 4 for Richardson before round-off error becomes dominant.
+
+Q5. Does Richardson achieve O(h^4)?
+Yes, when truncation error is the main source of error. Richardson removes the leading O(h^2) term.
+
+Q6. What is the role of floating-point round-off error?
+When h becomes very small, subtracting nearly equal floating-point values loses accuracy. Dividing by a small h increases the effect of this error.
