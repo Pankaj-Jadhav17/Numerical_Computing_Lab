@@ -16,7 +16,7 @@ from differentiation import (
 
 @dataclass
 class DiffResultRow:
-    function: str
+    function: str   #function
     h: float
     forward: float
     backward: float
@@ -26,7 +26,7 @@ class DiffResultRow:
     err_backward: float
     err_central: float
 
-
+#function comes from here....
 class DifferentiationAnalyzer:
     def __init__(self, x0: float, h_values: List[float]):
         self.x0 = x0

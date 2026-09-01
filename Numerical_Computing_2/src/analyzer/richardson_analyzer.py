@@ -1,11 +1,12 @@
 import csv
 import math
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from typing import Callable, Dict, List
 
 import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+matplotlib.use("Agg")
 
 from differentiation import CentralDifference, RichardsonExtrapolation
 
@@ -22,11 +23,11 @@ class RichardsonResultRow:
 
 
 class RichardsonAnalyzer:
-    def __init__(self, x0: float, h_values: List[float]):
+    def __init__(self, x0: float, h_values: list[float]):
         self.x0 = x0
         self.h_values = h_values
-        self.test_functions: List[Dict] = []
-        self.results: List[RichardsonResultRow] = []
+        self.test_functions: list[dict[str, object]] = []
+        self.results: list[RichardsonResultRow] = []
 
     def add_function(
         self,
@@ -66,8 +67,8 @@ class RichardsonAnalyzer:
                     )
                 )
 
-    def grouped_results(self) -> Dict[str, List[RichardsonResultRow]]:
-        groups: Dict[str, List[RichardsonResultRow]] = {}
+    def grouped_results(self) -> dict[str, list[RichardsonResultRow]]:
+        groups: dict[str, list[RichardsonResultRow]] = {}
 
         for result in self.results:
             groups.setdefault(result.function, []).append(result)
@@ -167,7 +168,7 @@ class RichardsonAnalyzer:
         plt.close(figure)
 
     @staticmethod
-    def _plot_errors(errors: List[float]) -> List[float]:
+    def _plot_errors(errors: list[float]) -> list[float]:
         smallest = 1e-16
         return [max(error, smallest) for error in errors]
 
