@@ -12,6 +12,12 @@ The program contains:
 3. Central Difference
 4. Central Second Derivative
 5. Richardson Extrapolation
+6. Newton Interpolation (Divided Differences)
 
 Input files are stored in input/.
 Generated results are stored in output/.
+
+Class Hierarchy:
+  InterpolationBase (ABC)
+    └── DividedDifferences
+          └── NewtonInterpolation

@@ -1,0 +1,27 @@
+Newton Interpolation Analysis
+Query points: [1.5, 2.5, 3.5]
+
+===== NEWTON INTERPOLATION ANALYSIS =====
+
+
+Function: exp
+  Total evaluations: 6
+
+  Dataset size n = 2:
+    Max absolute error:  1.872023e+01
+    Avg absolute error:  7.250088e+00
+    Min absolute error:  5.719799e-01
+
+  Dataset size n = 5:
+    Max absolute error:  4.949505e-01
+    Avg absolute error:  3.427182e-01
+    Min absolute error:  2.450588e-01
+
+  Accuracy improvement (n=2 → n=5): 21.2x
+
+
+===== NOTES =====
+• Newton interpolation with n points produces a polynomial of degree n-1.
+• Adding more data points generally improves accuracy inside the data range.
+• Extrapolation outside the data range can produce large errors.
+• The error estimate uses the last divided-difference coefficient as an approximation.

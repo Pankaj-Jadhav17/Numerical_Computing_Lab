@@ -1,0 +1,17 @@
+# Newton Interpolation Input File
+# ================================
+# Format:
+#   Line 1: number of data points (n)
+#   Line 2: x values (space-separated)
+#   Line 3: y values (space-separated) — leave blank to auto-compute from function
+#   Line 4: number of query points
+#   Line 5: query x values (space-separated)
+#
+# Lines starting with '#' are comments.
+
+# --- Small dataset (5 points) ---
+5
+1.0 2.0 3.0 4.0 5.0
+
+3
+1.5 2.5 3.5

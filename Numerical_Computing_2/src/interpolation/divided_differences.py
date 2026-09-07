@@ -5,7 +5,6 @@ Inherits from InterpolationBase and builds the Newton divided-difference
 table.  Can be used standalone to inspect the DD table or as a parent
 class for NewtonInterpolation.
 """
-
 from typing import List
 
 from .interpolation_base import InterpolationBase

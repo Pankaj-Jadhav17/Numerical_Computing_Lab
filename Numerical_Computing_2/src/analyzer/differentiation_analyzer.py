@@ -1,22 +1,19 @@
 import csv
 import math
 from dataclasses import asdict, dataclass
-from typing import Callable, Dict, List
+from typing import Callable
 
 import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from differentiation import (
-    BackwardDifference,
-    CentralDifference,
-    ForwardDifference,
-)
+matplotlib.use("Agg")
+
+from differentiation import BackwardDifference, CentralDifference, ForwardDifference
 
 
 @dataclass
 class DiffResultRow:
-    function: str   #function
+    function: str
     h: float
     forward: float
     backward: float
@@ -26,13 +23,15 @@ class DiffResultRow:
     err_backward: float
     err_central: float
 
-#function comes from here....
+
 class DifferentiationAnalyzer:
-    def __init__(self, x0: float, h_values: List[float]):
+    """Evaluate numerical differentiation accuracy across multiple step sizes."""
+
+    def __init__(self, x0: float, h_values: list[float]):
         self.x0 = x0
         self.h_values = h_values
-        self.test_functions: List[Dict] = []
-        self.results: List[DiffResultRow] = []
+        self.test_functions: list[dict[str, object]] = []
+        self.results: list[DiffResultRow] = []
 
     def add_function(
         self,
@@ -73,8 +72,8 @@ class DifferentiationAnalyzer:
                     )
                 )
 
-    def grouped_results(self) -> Dict[str, List[DiffResultRow]]:
-        groups: Dict[str, List[DiffResultRow]] = {}
+    def grouped_results(self) -> dict[str, list[DiffResultRow]]:
+        groups: dict[str, list[DiffResultRow]] = {}
 
         for result in self.results:
             groups.setdefault(result.function, []).append(result)
@@ -90,7 +89,6 @@ class DifferentiationAnalyzer:
             f"{'Backward':<16}{'Central':<16}{'Exact':<16}"
             f"{'Err Forward':<16}{'Err Backward':<16}{'Err Central':<16}\n"
         )
-
         lines = [header]
 
         for result in self.results:
@@ -128,7 +126,6 @@ class DifferentiationAnalyzer:
 
     def plot(self, path: str) -> None:
         groups = self.grouped_results()
-
         if not groups:
             return
 
@@ -141,7 +138,6 @@ class DifferentiationAnalyzer:
             figsize=(6 * columns, 4.5 * rows),
             squeeze=False,
         )
-
         axes = axes.flatten()
 
         for axis, (name, results) in zip(axes, groups.items()):
@@ -182,17 +178,12 @@ class DifferentiationAnalyzer:
         plt.close(figure)
 
     @staticmethod
-    def _plot_errors(errors: List[float]) -> List[float]:
+    def _plot_errors(errors: list[float]) -> list[float]:
         smallest = 1e-16
         return [max(error, smallest) for error in errors]
 
     @staticmethod
-    def observed_order(
-        h1: float,
-        error1: float,
-        h2: float,
-        error2: float,
-    ) -> float:
+    def observed_order(h1: float, error1: float, h2: float, error2: float) -> float:
         if error1 <= 0 or error2 <= 0 or h1 == h2:
             return 0.0
 
@@ -206,7 +197,6 @@ class DifferentiationAnalyzer:
 
         for name, results in self.grouped_results().items():
             middle = results[len(results) // 2]
-
             lines.append(f"\nFunction: {name}\n")
             lines.append(
                 f"At h = {middle.h:.0e}: "
@@ -220,7 +210,6 @@ class DifferentiationAnalyzer:
                 "Backward": middle.err_backward,
                 "Central": middle.err_central,
             }
-
             best_method = min(errors, key=errors.get)
             lines.append(f"Most accurate method: {best_method}\n")
 

@@ -1,0 +1,10 @@
+# Newton Interpolation Input File — Large Dataset
+# =================================================
+# 20 equally-spaced points in [0, 10]
+# Y-values left blank (auto-computed from function)
+
+20
+0.0 0.526 1.053 1.579 2.105 2.632 3.158 3.684 4.211 4.737 5.263 5.789 6.316 6.842 7.368 7.895 8.421 8.947 9.474 10.0
+
+5
+0.5 2.0 5.0 7.5 9.0
