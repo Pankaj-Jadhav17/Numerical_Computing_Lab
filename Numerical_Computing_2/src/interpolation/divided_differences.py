@@ -24,11 +24,6 @@ class DividedDifferences(InterpolationBase):
 
     # ── core computation ───────────────────────────────────────────────
     def _build_table(self) -> List[List[float]]:
-        """Build the divided-difference table using the standard algorithm.
-
-        Works efficiently for both small and very large datasets (O(n^2)
-        time and space).
-        """
         n = self._n
         # table[i][j]: j-th order divided difference starting at index i
         table: List[List[float]] = [[0.0] * n for _ in range(n)]
