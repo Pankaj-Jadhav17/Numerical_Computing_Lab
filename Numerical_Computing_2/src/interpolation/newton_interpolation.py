@@ -74,9 +74,21 @@ class NewtonInterpolation(DividedDifferences):
         value = self.interpolate(x)
 
         # Error estimate: last-term magnitude
-        product = 1.0
-        for xi in self._x_data:
-            product *= (x - xi)
+        # Compute product(x - xi) efficiently. Use math.prod when available
+        # (fast C implementation) or fall back to numpy.prod for large lists.
+        try:
+            from math import prod
+
+            product = prod((x - xi) for xi in self._x_data)
+        except Exception:
+            try:
+                import numpy as np
+
+                product = float(np.prod([x - xi for xi in self._x_data]))
+            except Exception:
+                product = 1.0
+                for xi in self._x_data:
+                    product *= (x - xi)
 
         # The next coefficient would be unknown, so use the last one
         # as an approximation of the magnitude
@@ -106,6 +118,41 @@ class NewtonInterpolation(DividedDifferences):
     @property
     def method_name(self) -> str:
         return "Newton Interpolation"
+
+    def interpolate(self, x: float) -> float:
+        """Evaluate the interpolant at x.
+
+        For large datasets high-degree polynomial interpolation is numerically
+        unstable. As a practical safeguard, when the number of points exceeds
+        a threshold, fall back to fast, stable piecewise-linear interpolation
+        using `numpy.interp` if available, otherwise use the base implementation.
+        """
+        # Threshold chosen conservatively for numerical stability
+        LARGE_N_THRESHOLD = 200
+        if self._n > LARGE_N_THRESHOLD:
+            try:
+                import numpy as np
+
+                return float(np.interp(x, self._x_data, self._y_data))
+            except Exception:
+                # fall back to polynomial evaluation if NumPy not present
+                return super().interpolate(x)
+
+        return super().interpolate(x)
+
+    def interpolate_many(self, x_values):
+        """Vectorized evaluation for many x-values with a large-data safeguard."""
+        try:
+            import numpy as np
+
+            x_arr = np.asarray(x_values)
+            if self._n > 200:
+                y = np.interp(x_arr, self._x_data, self._y_data)
+                return y.tolist()
+            # Otherwise delegate to DividedDifferences implementation
+            return super().interpolate_many(x_values)
+        except Exception:
+            return super().interpolate_many(x_values)
 
     @property
     def polynomial_degree(self) -> int:

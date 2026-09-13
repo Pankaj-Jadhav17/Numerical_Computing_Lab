@@ -70,6 +70,27 @@ class DividedDifferences(InterpolationBase):
 
         return result
 
+    def interpolate_many(self, x_values):
+        """Interpolate at multiple x-values. If NumPy is available and the
+        inputs are array-like, perform a vectorized Horner evaluation for
+        speed; otherwise fall back to the scalar loop in the base class.
+        """
+        try:
+            import numpy as np
+
+            x_arr = np.asarray(x_values)
+            coeffs = np.array(self.coefficients)
+
+            # Vectorized Horner: result is an array with same shape as x_arr
+            result = coeffs[self._n - 1]
+            for k in range(self._n - 2, -1, -1):
+                result = result * (x_arr - self._x_data[k]) + coeffs[k]
+
+            return result.tolist()
+        except Exception:
+            # Fall back to scalar evaluation for compatibility
+            return super().interpolate_many(x_values)
+
     @property
     def method_name(self) -> str:
         return "Divided Differences"

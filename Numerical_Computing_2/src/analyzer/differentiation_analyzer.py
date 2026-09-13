@@ -52,11 +52,60 @@ class DifferentiationAnalyzer:
 
         for test in self.test_functions:
             exact = test["exact"](self.x0)
+            func = test["function"]
 
+            # Try a NumPy-vectorized evaluation for all h-values at once.
+            # If the test function accepts numpy arrays (e.g. uses numpy ufuncs)
+            # this will be significantly faster for large h lists. Otherwise
+            # fall back to the scalar loop using the existing classes.
+            vectorized_done = False
+            try:
+                import numpy as np
+
+                h_arr = np.array(self.h_values)
+
+                # Quick check whether func accepts array inputs
+                try:
+                    _ = func(self.x0 + h_arr[:1])
+                    accepts_array = True
+                except Exception:
+                    accepts_array = False
+
+                if accepts_array and h_arr.size > 0:
+                    f_x = func(self.x0)
+                    forward_arr = (func(self.x0 + h_arr) - f_x) / h_arr
+                    backward_arr = (f_x - func(self.x0 - h_arr)) / h_arr
+                    central_arr = (func(self.x0 + h_arr) - func(self.x0 - h_arr)) / (
+                        2.0 * h_arr
+                    )
+
+                    for idx, h in enumerate(self.h_values):
+                        self.results.append(
+                            DiffResultRow(
+                                function=test["name"],
+                                h=h,
+                                forward=float(forward_arr[idx]),
+                                backward=float(backward_arr[idx]),
+                                central=float(central_arr[idx]),
+                                exact=exact,
+                                err_forward=abs(exact - float(forward_arr[idx])),
+                                err_backward=abs(exact - float(backward_arr[idx])),
+                                err_central=abs(exact - float(central_arr[idx])),
+                            )
+                        )
+                    vectorized_done = True
+            except Exception:
+                # Either numpy isn't available or vectorization failed; fall back
+                vectorized_done = False
+
+            if vectorized_done:
+                continue
+
+            # Fallback scalar evaluation (compatible with any Python callable)
             for h in self.h_values:
-                forward = ForwardDifference(test["function"], h).derivative(self.x0)
-                backward = BackwardDifference(test["function"], h).derivative(self.x0)
-                central = CentralDifference(test["function"], h).derivative(self.x0)
+                forward = ForwardDifference(func, h).derivative(self.x0)
+                backward = BackwardDifference(func, h).derivative(self.x0)
+                central = CentralDifference(func, h).derivative(self.x0)
 
                 self.results.append(
                     DiffResultRow(

@@ -59,8 +59,28 @@ class InterpolationBase(ABC):
 
     # ── convenience ────────────────────────────────────────────────────
     def interpolate_many(self, x_values: List[float]) -> List[float]:
-        """Interpolate at several x-values."""
-        return [self.interpolate(x) for x in x_values]
+        """Interpolate at several x-values.
+
+        Try to use NumPy for vectorized evaluation when available for
+        performance on large input arrays; otherwise fall back to the
+        scalar loop which works for any callable.
+        """
+        try:
+            import numpy as np
+
+            x_arr = np.asarray(x_values)
+            # Delegate to subclass which may implement a NumPy-aware method.
+            # If subclass doesn't support vectorized evaluation, fall back.
+            if hasattr(self, "interpolate_many") and type(self).interpolate_many is not InterpolationBase.interpolate_many:
+                # Avoid infinite recursion: call the subclass implementation
+                return type(self).interpolate_many(self, x_values)
+
+            # Fallback vectorized evaluation using numpy.frompyfunc -> slower
+            func = np.frompyfunc(lambda xv: self.interpolate(float(xv)), 1, 1)
+            res = func(x_arr)
+            return [float(v) for v in res.tolist()]
+        except Exception:
+            return [self.interpolate(x) for x in x_values]
 
     @staticmethod
     def absolute_error(exact: float, approximate: float) -> float:

@@ -199,18 +199,27 @@ class InterpolationAnalyzer:
             # ── top panel: curves ──────────────────────────────────────
             interp_map = self._interpolators.get(name, {})
             if interp_map:
-                # Find x range
+                # Find x range and construct plotting grid. Use NumPy when
+                # available for efficient linspace creation and bulk eval.
                 all_x = []
                 for interp in interp_map.values():
                     all_x.extend(interp.x_data)
                 x_min, x_max = min(all_x), max(all_x)
                 margin = (x_max - x_min) * 0.05
-                x_plot = [
-                    x_min - margin + i * (x_max - x_min + 2 * margin) / 200
-                    for i in range(201)
-                ]
 
-                # Exact curve
+                try:
+                    import numpy as np
+
+                    x_plot = np.linspace(
+                        x_min - margin, x_max + margin, 201
+                    )
+                except Exception:
+                    x_plot = [
+                        x_min - margin + i * (x_max - x_min + 2 * margin) / 200
+                        for i in range(201)
+                    ]
+
+                # Exact curve: try vectorized evaluation when possible
                 func = None
                 for t in self.test_functions:
                     if t["name"] == name:
@@ -218,8 +227,15 @@ class InterpolationAnalyzer:
                         break
 
                 if func:
-                    y_exact = [func(x) for x in x_plot]
-                    ax_top.plot(x_plot, y_exact, "k-", lw=2, label="Exact")
+                    try:
+                        # Prefer NumPy arrays if available
+                        import numpy as np
+
+                        y_exact = func(x_plot) if hasattr(x_plot, "__array__") else [func(x) for x in x_plot]
+                        ax_top.plot(x_plot, y_exact, "k-", lw=2, label="Exact")
+                    except Exception:
+                        y_exact = [func(x) for x in x_plot]
+                        ax_top.plot(x_plot, y_exact, "k-", lw=2, label="Exact")
 
                 # Interpolated curves for each dataset size
                 colors = plt.cm.viridis([0.2, 0.5, 0.8])
