@@ -22,7 +22,126 @@ This repository implements numerical-computing tools for interpolation and diffe
 - `src/interpolation/lagrange_interpolation.py`: Lagrange form (useful for theory and small-scale interpolation).
 - `src/differentiation/numerical_differentiation.py`: Provides unified interfaces for derivative approximations.
 - `src/differentiation/richardson_extrapolation.py`: Improves a base finite-difference estimate using extrapolation.
+- `src/integration/`: Contains the new numerical integration package built around an abstract base class, data-source abstractions, and a composite trapezoidal implementation.
 - `src/analyzer/*`: Use these to reproduce tables in `output/` for lab reports.
+
+**Integration module implementation (step by step)**
+
+The new integration package follows the same object-oriented design used in the differentiation and interpolation modules: a common abstract base class is defined once, concrete algorithms inherit from it, and data is passed in through a reusable abstraction instead of hard-coding arrays or functions into each method.
+
+File: [src/integration/__init__.py](src/integration/__init__.py)
+
+- This file exports the public API of the integration package.
+- It exposes the abstract base class (`IntegrationMethod`), the `DataSource` hierarchy, the concrete algorithm (`CompositeTrapezoidal`), and the result dataclass (`IntegrationResultRow`).
+- This makes the package consistent with the existing `src/differentiation/__init__.py` and `src/interpolation/__init__.py` modules.
+
+File: [src/integration/integration_base.py](src/integration/integration_base.py)
+
+- `IntegrationMethod` is the shared abstract base class for all numerical integration algorithms.
+- Its constructor accepts a `DataSource` instance and validates it before assignment.
+- The abstract methods enforce a fixed interface across implementations:
+  - `integrate()` must compute the numerical integral.
+  - `method_name` must return a human-readable label.
+- `absolute_error(exact, approximate)` is a shared error helper, mirroring the same convenience method used by the differentiation code.
+- `__repr__()` returns a compact description such as `CompositeTrapezoidal(n=...)`, which is consistent with the repository's lightweight debugging style.
+
+File: [src/integration/data_source.py](src/integration/data_source.py)
+
+- `DataSource` is an abstract interface representing the input to an integration algorithm.
+- This design allows one integration method to work with multiple kinds of data instead of being tied to a single function signature.
+- There are two concrete implementations:
+
+  1. `FunctionDataSource`
+     - Accepts a callable `func`, a left endpoint `a`, a right endpoint `b`, and the number of points `n`.
+     - Builds a uniform grid over the interval `[a, b]`.
+     - Evaluates the function at each grid point and stores both x-values and y-values.
+     - This is especially useful when we want to integrate a continuous mathematical function numerically without manually preparing arrays.
+
+  2. `ArrayDataSource`
+     - Accepts explicit `x_values` and `y_values` arrays.
+     - Validates that they have the same length and that at least two points are present.
+     - This is useful when the user already has sampled data from a table, experiment, sensor, or file.
+
+- The `DataSource` abstraction keeps integration methods independent from whether the source is a function or a list of measurements.
+
+File: [src/integration/composite_trapezoidal.py](src/integration/composite_trapezoidal.py)
+
+- `CompositeTrapezoidal` inherits from `IntegrationMethod` and implements the composite trapezoidal rule.
+- The method defines the formula:
+
+  $$\int_a^b f(x)\,dx \approx \sum_{i=0}^{n-2} \frac{h_i}{2}(y_i + y_{i+1})$$
+
+  where each strip is a trapezoid between consecutive sample points.
+
+- The algorithm works as follows:
+  1. Read the x-values and y-values from the selected data source.
+  2. Loop through each adjacent pair `(x_i, x_{i+1})`.
+  3. Compute the trapezoid area using the standard formula:
+     `0.5 * (y_i + y_{i+1}) * (x_{i+1} - x_i)`.
+  4. Sum all trapezoid areas to obtain the approximate integral.
+
+- The implementation also includes a helper method `result_row(exact=None)` that builds a `IntegrationResultRow` with the computed integral and, optionally, the exact value and absolute error.
+
+File: [src/integration/integration_result.py](src/integration/integration_result.py)
+
+- This dataclass stores one integration result in a structured form.
+- It contains:
+  - `method`: name of the method used
+  - `interval_start`: left bound of the integration interval
+  - `interval_end`: right bound of the integration interval
+  - `n`: number of points used
+  - `result`: numerical approximation
+  - `exact`: optional exact value
+  - `absolute_error`: optional absolute difference between exact and approximate value
+
+- This mirrors the repository's existing result-row style used in the analyzer modules and helps produce clean tabular output or CSV export in future experiments.
+
+**Why this design is useful**
+
+This implementation follows a pattern that is already used throughout the repository:
+- Each algorithm is represented as a class.
+- Shared logic is placed in an abstract base class.
+- Public methods are simple and explicit.
+- Input validation occurs early and consistently.
+- Results are represented with dataclasses for later analysis and reporting.
+
+This keeps the code easy to extend. If, for example, a new rule such as Simpson's rule or Gauss quadrature is added later, it can simply inherit from `IntegrationMethod`, provide its own `integrate()` implementation, and reuse the same `DataSource` interface.
+
+**How the integration module fits the project**
+
+The repository already separates the following concerns:
+- `src/interpolation/` for interpolation algorithms
+- `src/differentiation/` for derivative approximation
+- `src/analyzer/` for experiment runners and output generation
+
+The new `src/integration/` package extends the same organizational model to numerical integration. It acts as the numerical-integration counterpart to the differentiation and interpolation layers.
+
+**Example usage**
+
+```python
+import math
+from integration import FunctionDataSource, CompositeTrapezoidal
+
+f = FunctionDataSource(math.sin, 0.0, math.pi, 100)
+method = CompositeTrapezoidal(f)
+value = method.integrate()
+print(value)
+```
+
+This computes an approximation of:
+
+$$\int_0^\pi \sin(x)\,dx$$
+
+which is known to be `2.0`. The composite trapezoidal rule provides a close approximation, and the error can be reported through `result_row(exact=2.0)`.
+
+**Practical interpretation**
+
+- If the function is known analytically, we can use `FunctionDataSource` to sample it on a grid.
+- If the function is already measured from an experiment, we can use `ArrayDataSource` directly.
+- `CompositeTrapezoidal` is a good general-purpose method for smooth, sampled functions where more advanced quadrature is not yet needed.
+- It is particularly well suited to laboratory work and educational examples where the main goal is to understand approximation error and how the accuracy improves as the number of subdivisions increases.
+
+This integration module adds a complete, reusable, and extensible numerical-integration layer to the project without changing the structure of the existing differentiation or interpolation logic.
 
 **Detailed line-by-line explanation (example):**
 The following section explains `src/interpolation/divided_differences.py` line-by-line so you can see why each part exists and how it supports the overall goals.
