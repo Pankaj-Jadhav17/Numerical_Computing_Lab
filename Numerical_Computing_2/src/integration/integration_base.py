@@ -1,11 +1,3 @@
-"""
-Abstract base class for all integration methods.
-
-Subclasses must implement:
-    - integrate()  → float
-    - method_name   → str (property)
-"""
-
 from abc import ABC, abstractmethod
 
 from .data_source import DataSource
