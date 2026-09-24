@@ -24,6 +24,21 @@ TEST_FUNCTIONS = [
 ]
 
 
+def _save_analysis_outputs(
+    analyzer,
+    output_dir,
+    table_name,
+    csv_name,
+    analysis_name,
+    plot_name,
+):
+    analyzer.write_table(os.path.join(output_dir, table_name))
+    analyzer.write_csv(os.path.join(output_dir, csv_name))
+    analyzer.write_analysis(os.path.join(output_dir, analysis_name))
+    if hasattr(analyzer, "plot"):
+        analyzer.plot(os.path.join(output_dir, plot_name))
+
+
 def run_all():
     output_dir = ensure_output_dir(os.path.join(PROJECT_DIR, "output"))
 
@@ -34,10 +49,14 @@ def run_all():
         for name, func, exact in TEST_FUNCTIONS:
             analyzer.add_function(name, func, exact)
         analyzer.run()
-        analyzer.write_table(os.path.join(output_dir, "differentiation_table.txt"))
-        analyzer.write_csv(os.path.join(output_dir, "differentiation_results.csv"))
-        analyzer.write_analysis(os.path.join(output_dir, "differentiation_analysis.txt"))
-        analyzer.plot(os.path.join(output_dir, "differentiation_loglog_plot.png"))
+        _save_analysis_outputs(
+            analyzer,
+            output_dir,
+            "differentiation_table.txt",
+            "differentiation_results.csv",
+            "differentiation_analysis.txt",
+            "differentiation_loglog_plot.png",
+        )
         print("Differentiation analysis complete.")
     except Exception as exc:
         print(f"Skipping differentiation: {exc}")
@@ -49,10 +68,14 @@ def run_all():
         for name, func, exact in TEST_FUNCTIONS:
             analyzer.add_function(name, func, exact)
         analyzer.run()
-        analyzer.write_table(os.path.join(output_dir, "richardson_table.txt"))
-        analyzer.write_csv(os.path.join(output_dir, "richardson_results.csv"))
-        analyzer.write_analysis(os.path.join(output_dir, "richardson_analysis.txt"))
-        analyzer.plot(os.path.join(output_dir, "richardson_loglog_plot.png"))
+        _save_analysis_outputs(
+            analyzer,
+            output_dir,
+            "richardson_table.txt",
+            "richardson_results.csv",
+            "richardson_analysis.txt",
+            "richardson_loglog_plot.png",
+        )
         print("Richardson analysis complete.")
     except Exception as exc:
         print(f"Skipping Richardson: {exc}")
@@ -64,10 +87,14 @@ def run_all():
         for name, func, _ in TEST_FUNCTIONS:
             interp.add_function(name, func, x_data, y_data if y_data else None)
         interp.run()
-        interp.write_table(os.path.join(output_dir, "interpolation_table.txt"))
-        interp.write_csv(os.path.join(output_dir, "interpolation_results.csv"))
-        interp.write_analysis(os.path.join(output_dir, "interpolation_analysis.txt"))
-        interp.plot(os.path.join(output_dir, "interpolation_plot.png"))
+        _save_analysis_outputs(
+            interp,
+            output_dir,
+            "interpolation_table.txt",
+            "interpolation_results.csv",
+            "interpolation_analysis.txt",
+            "interpolation_plot.png",
+        )
         print("Interpolation analysis complete.")
     except Exception as exc:
         print(f"Skipping interpolation: {exc}")
