@@ -1,0 +1,2 @@
+method,interval_start,interval_end,n,result,exact,absolute_error
+CompositeTrapezoidal,0.0,4.0,5,56.0,52.0,4.0

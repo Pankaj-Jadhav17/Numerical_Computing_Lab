@@ -1,0 +1,4 @@
+Numerical Integration Analysis
+CompositeTrapezoidal used 7 data points.
+Approximate integral over [0.0, 4.0] = 53.7777777778.
+Absolute error = 1.77777777778.

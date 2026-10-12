@@ -1,0 +1,8 @@
+method=power
+n=2
+matrix
+4 1
+1 3
+initial_vector=1 0
+tolerance=1e-10
+max_iterations=1000

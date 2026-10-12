@@ -1,0 +1,19 @@
+Integration Method Comparison Analysis
+
+h = 0.666666666667
+Most accurate: CompositeSimpsonOneThird (absolute error 0)
+CompositeTrapezoidal: 53.7777777778
+CompositeSimpsonOneThird: 52
+CompositeSimpsonThreeEighths: 52
+
+h = 0.333333333333
+Most accurate: CompositeSimpsonOneThird (absolute error 0)
+CompositeTrapezoidal: 52.4444444444
+CompositeSimpsonOneThird: 52
+CompositeSimpsonThreeEighths: 52
+
+h = 0.222222222222
+Most accurate: CompositeSimpsonOneThird (absolute error 0)
+CompositeTrapezoidal: 52.1975308642
+CompositeSimpsonOneThird: 52
+CompositeSimpsonThreeEighths: 52

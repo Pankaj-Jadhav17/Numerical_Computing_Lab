@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+from math import isclose
 
 from .data_source import DataSource
+from .integration_result import IntegrationResultRow
 
 
 class IntegrationMethod(ABC):
@@ -30,6 +32,41 @@ class IntegrationMethod(ABC):
     def absolute_error(exact: float, approximate: float) -> float:
         """Compute the absolute error between exact and approximate values."""
         return abs(exact - approximate)
+
+    def _uniform_spacing(self) -> float:
+        """Return the common x spacing, rejecting data that is not uniform."""
+        x_values = self.data_source.x_values
+        if len(x_values) < 2:
+            raise ValueError("At least two points are required for integration")
+
+        spacing = x_values[1] - x_values[0]
+        if spacing == 0 or any(
+            not isclose(
+                x_value,
+                x_values[0] + index * spacing,
+                rel_tol=1e-9,
+                abs_tol=1e-12,
+            )
+            for index, x_value in enumerate(x_values[2:], start=2)
+        ):
+            raise ValueError("Simpson's rules require equally spaced x values")
+        return spacing
+
+    def result_row(self, exact: float | None = None) -> IntegrationResultRow:
+        """Create a result row containing the computed integral and optional error."""
+        x_values = self.data_source.x_values
+        result = self.integrate()
+        values = {
+            "method": self.method_name,
+            "interval_start": x_values[0],
+            "interval_end": x_values[-1],
+            "n": len(x_values),
+            "result": result,
+        }
+        if exact is not None:
+            values["exact"] = exact
+            values["absolute_error"] = self.absolute_error(exact, result)
+        return IntegrationResultRow(**values)
 
     def __repr__(self) -> str:
         return f"{self.method_name}(n={len(self.data_source)})"

@@ -1,0 +1,9 @@
+method=shifted
+n=2
+matrix
+2 0
+0 5
+mu=4
+initial_vector=1 1
+tolerance=1e-10
+max_iterations=1000

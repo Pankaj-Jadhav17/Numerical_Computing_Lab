@@ -1,0 +1,7 @@
+Numerical Integration Result
+Method: CompositeTrapezoidal
+Interval: [0.0, 4.0]
+Data points: 5
+Approximation: 56
+Exact value: 52
+Absolute error: 4

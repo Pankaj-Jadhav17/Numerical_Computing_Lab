@@ -1,7 +1,6 @@
 """Composite trapezoidal rule implementation."""
 
 from .integration_base import IntegrationMethod
-from .integration_result import IntegrationResultRow
 
 
 class CompositeTrapezoidal(IntegrationMethod):
@@ -31,27 +30,3 @@ class CompositeTrapezoidal(IntegrationMethod):
             total += 0.5 * (y0 + y1) * (x1 - x0)
 
         return float(total)
-
-    def result_row(self, exact: float | None = None) -> IntegrationResultRow:
-        """Create a result row containing the computed integral and optional error."""
-        raw_result = self.integrate()
-        x_values = self.data_source.x_values
-
-        if exact is None:
-            return IntegrationResultRow(
-                method=self.method_name,
-                interval_start=x_values[0],
-                interval_end=x_values[-1],
-                n=len(x_values),
-                result=raw_result,
-            )
-
-        return IntegrationResultRow(
-            method=self.method_name,
-            interval_start=x_values[0],
-            interval_end=x_values[-1],
-            n=len(x_values),
-            result=raw_result,
-            exact=exact,
-            absolute_error=self.absolute_error(exact, raw_result),
-        )

@@ -1,0 +1,7 @@
+Numerical Integration Results
+Method: CompositeSimpsonThreeEighths
+Interval: [0.0, 4.0]
+Data points: 7
+
+Approximation       Exact               Absolute Error      
+52                  52                  0                   

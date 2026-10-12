@@ -1,0 +1,12 @@
+Eigenvalue / Eigenvector Analysis
+Method: InversePowerMethod
+Converged: True
+Iterations: 27
+Input matrix:
+  [ 2  0]
+  [ 0  5]
+Dominant eigenvalue: 2.0
+Residual norm: 5.404319552844597e-11
+Eigenvector:
+   1
+   1.80143985095e-11

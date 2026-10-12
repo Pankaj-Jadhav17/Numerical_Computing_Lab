@@ -1,0 +1,7 @@
+Numerical Integration Results
+Method: CompositeTrapezoidal
+Interval: [0.0, 4.0]
+Data points: 7
+
+Approximation       Exact               Absolute Error      
+53.7777777778       52                  1.77777777778       

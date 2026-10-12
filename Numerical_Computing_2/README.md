@@ -1,6 +1,6 @@
 **Project Overview**
 
-This repository implements numerical-computing tools for interpolation and differentiation used in a Numerical Computing laboratory course. It provides implementations of classical algorithms (forward/central/backward differences, Newton and Lagrange interpolation, Richardson extrapolation) plus analyzer code to run experiments and record results.
+This repository implements numerical-computing tools for interpolation, differentiation, and integration used in a Numerical Computing laboratory course. It provides implementations of classical algorithms (forward/central/backward differences, Newton and Lagrange interpolation, Richardson extrapolation, trapezoidal integration, and Simpson's 1/3 and 3/8 rules) plus analyzer code to run experiments and record results.
 
 **Architecture**
 - **`src/`**: core implementation.
@@ -14,6 +14,7 @@ This repository implements numerical-computing tools for interpolation and diffe
 **High-level functionality**
 - Interpolate a function given sample points using Newton's divided-differences or Lagrange interpolation.
 - Compute numerical derivatives (forward, backward, central) and improve accuracy with Richardson extrapolation.
+- Approximate definite integrals with the composite trapezoidal rule and composite Simpson's 1/3 and 3/8 rules.
 - Produce difference tables, coefficient lists, and human-readable reports.
 
 **Module responsibilities**
@@ -22,126 +23,71 @@ This repository implements numerical-computing tools for interpolation and diffe
 - `src/interpolation/lagrange_interpolation.py`: Lagrange form (useful for theory and small-scale interpolation).
 - `src/differentiation/numerical_differentiation.py`: Provides unified interfaces for derivative approximations.
 - `src/differentiation/richardson_extrapolation.py`: Improves a base finite-difference estimate using extrapolation.
-- `src/integration/`: Contains the new numerical integration package built around an abstract base class, data-source abstractions, and a composite trapezoidal implementation.
+- `src/integration/`: Numerical integration package with reusable data sources, a shared abstract base, the composite trapezoidal rule, and both composite Simpson rules.
 - `src/analyzer/*`: Use these to reproduce tables in `output/` for lab reports.
 
-**Integration module implementation (step by step)**
+**Numerical integration**
 
-The new integration package follows the same object-oriented design used in the differentiation and interpolation modules: a common abstract base class is defined once, concrete algorithms inherit from it, and data is passed in through a reusable abstraction instead of hard-coding arrays or functions into each method.
+The integration package exposes the composite trapezoidal rule, composite Simpson's 1/3 rule, and composite Simpson's 3/8 rule through `src/integration/__init__.py`. Every method accepts the same `DataSource` abstraction and inherits the common interface from `IntegrationMethod`.
 
-File: [src/integration/__init__.py](src/integration/__init__.py)
+**Object-oriented structure and workflow**
 
-- This file exports the public API of the integration package.
-- It exposes the abstract base class (`IntegrationMethod`), the `DataSource` hierarchy, the concrete algorithm (`CompositeTrapezoidal`), and the result dataclass (`IntegrationResultRow`).
-- This makes the package consistent with the existing `src/differentiation/__init__.py` and `src/interpolation/__init__.py` modules.
+- `DataSource` defines the read-only `x_values` and `y_values` interface. `FunctionDataSource(func, a, b, n)` samples a callable at `n` evenly spaced points; `ArrayDataSource(x_values, y_values)` wraps measured or precomputed values and checks that both arrays have matching lengths and at least two points.
+- `IntegrationMethod` validates that its input is a `DataSource`, declares `integrate()` and `method_name`, checks uniform spacing for Simpson's rules, and supplies `result_row(exact=None)` for common result reporting.
+- Each concrete rule inherits from `IntegrationMethod` and implements only its numerical formula. A caller can therefore change the rule without changing how the data is supplied or how its result is reported.
+- `result_row()` returns an `IntegrationResultRow` with the method name, interval bounds, number of points, and approximation. Passing `exact` also fills in the exact value and absolute error `abs(exact - result)`.
 
-File: [src/integration/integration_base.py](src/integration/integration_base.py)
+The calculation flow is: create a data source, instantiate a rule with it, call `integrate()` for a float or `result_row(exact=...)` for structured output. Function samples are generated when the `FunctionDataSource` is constructed; array data is not resampled.
 
-- `IntegrationMethod` is the shared abstract base class for all numerical integration algorithms.
-- Its constructor accepts a `DataSource` instance and validates it before assignment.
-- The abstract methods enforce a fixed interface across implementations:
-  - `integrate()` must compute the numerical integral.
-  - `method_name` must return a human-readable label.
-- `absolute_error(exact, approximate)` is a shared error helper, mirroring the same convenience method used by the differentiation code.
-- `__repr__()` returns a compact description such as `CompositeTrapezoidal(n=...)`, which is consistent with the repository's lightweight debugging style.
+**Composite Simpson formulas**
 
-File: [src/integration/data_source.py](src/integration/data_source.py)
+Let `m` be the number of subintervals and `h` the uniform signed spacing between samples. The number of supplied points is `m + 1`. Simpson's rules require equal spacing; they support reversed bounds because the signed spacing is retained.
 
-- `DataSource` is an abstract interface representing the input to an integration algorithm.
-- This design allows one integration method to work with multiple kinds of data instead of being tied to a single function signature.
-- There are two concrete implementations:
+For Simpson's 1/3 rule, `m` must be even and at least two:
 
-  1. `FunctionDataSource`
-     - Accepts a callable `func`, a left endpoint `a`, a right endpoint `b`, and the number of points `n`.
-     - Builds a uniform grid over the interval `[a, b]`.
-     - Evaluates the function at each grid point and stores both x-values and y-values.
-     - This is especially useful when we want to integrate a continuous mathematical function numerically without manually preparing arrays.
+$$\int_a^b f(x)\,dx \approx \frac{h}{3}\left[y_0+y_m+4\sum_{\substack{i=1\\i\text{ odd}}}^{m-1}y_i+2\sum_{\substack{i=2\\i\text{ even}}}^{m-2}y_i\right]$$
 
-  2. `ArrayDataSource`
-     - Accepts explicit `x_values` and `y_values` arrays.
-     - Validates that they have the same length and that at least two points are present.
-     - This is useful when the user already has sampled data from a table, experiment, sensor, or file.
+`CompositeSimpsonOneThird` applies weights `1, 4, 2, 4, ..., 2, 4, 1` to the sampled values.
 
-- The `DataSource` abstraction keeps integration methods independent from whether the source is a function or a list of measurements.
+For Simpson's 3/8 rule, `m` must be a multiple of three and at least three:
 
-File: [src/integration/composite_trapezoidal.py](src/integration/composite_trapezoidal.py)
+$$\int_a^b f(x)\,dx \approx \frac{3h}{8}\left[y_0+y_m+3\sum_{\substack{1\leq i<m\\i\not\equiv 0\pmod 3}}y_i+2\sum_{\substack{3\leq i<m\\i\equiv 0\pmod 3}}y_i\right]$$
 
-- `CompositeTrapezoidal` inherits from `IntegrationMethod` and implements the composite trapezoidal rule.
-- The method defines the formula:
+`CompositeSimpsonThreeEighths` applies weight `2` at interior indices divisible by three and weight `3` at the other interior indices. Both rules are exact in exact arithmetic for polynomials up to degree three when their sampling requirements are met.
 
-  $$\int_a^b f(x)\,dx \approx \sum_{i=0}^{n-2} \frac{h_i}{2}(y_i + y_{i+1})$$
+If a Simpson rule receives too few points, an invalid subinterval count, or nonuniform x-values, `integrate()` raises `ValueError` instead of silently applying an invalid formula. The trapezoidal rule does not require uniform spacing.
 
-  where each strip is a trapezoid between consecutive sample points.
+**Run integration from the main menu**
 
-- The algorithm works as follows:
-  1. Read the x-values and y-values from the selected data source.
-  2. Loop through each adjacent pair `(x_i, x_{i+1})`.
-  3. Compute the trapezoid area using the standard formula:
-     `0.5 * (y_i + y_{i+1}) * (x_{i+1} - x_i)`.
-  4. Sum all trapezoid areas to obtain the approximate integral.
+From the repository root, start the application and choose `4. Numerical Integration`. The program reads all configured step sizes and automatically compares the trapezoidal, Simpson's 1/3, and Simpson's 3/8 rules on each grid. The provided example uses `h=0.6666666666667, 0.3333333333333, 0.2222222222222` over `[0, 4]`; each step gives a subinterval count divisible by six, so all methods use the same grid at each `h`.
 
-- The implementation also includes a helper method `result_row(exact=None)` that builds a `IntegrationResultRow` with the computed integral and, optionally, the exact value and absolute error.
-
-File: [src/integration/integration_result.py](src/integration/integration_result.py)
-
-- This dataclass stores one integration result in a structured form.
-- It contains:
-  - `method`: name of the method used
-  - `interval_start`: left bound of the integration interval
-  - `interval_end`: right bound of the integration interval
-  - `n`: number of points used
-  - `result`: numerical approximation
-  - `exact`: optional exact value
-  - `absolute_error`: optional absolute difference between exact and approximate value
-
-- This mirrors the repository's existing result-row style used in the analyzer modules and helps produce clean tabular output or CSV export in future experiments.
-
-**Why this design is useful**
-
-This implementation follows a pattern that is already used throughout the repository:
-- Each algorithm is represented as a class.
-- Shared logic is placed in an abstract base class.
-- Public methods are simple and explicit.
-- Input validation occurs early and consistently.
-- Results are represented with dataclasses for later analysis and reporting.
-
-This keeps the code easy to extend. If, for example, a new rule such as Simpson's rule or Gauss quadrature is added later, it can simply inherit from `IntegrationMethod`, provide its own `integrate()` implementation, and reuse the same `DataSource` interface.
-
-**How the integration module fits the project**
-
-The repository already separates the following concerns:
-- `src/interpolation/` for interpolation algorithms
-- `src/differentiation/` for derivative approximation
-- `src/analyzer/` for experiment runners and output generation
-
-The new `src/integration/` package extends the same organizational model to numerical integration. It acts as the numerical-integration counterpart to the differentiation and interpolation layers.
-
-**Example usage**
-
-```python
-import math
-from integration import FunctionDataSource, CompositeTrapezoidal
-
-f = FunctionDataSource(math.sin, 0.0, math.pi, 100)
-method = CompositeTrapezoidal(f)
-value = method.integrate()
-print(value)
+```bash
+python main.py
 ```
 
-This computes an approximation of:
+For a built-in function, the config uses these keys:
 
-$$\int_0^\pi \sin(x)\,dx$$
+```text
+source=function
+function=poly    # exp, sin, cos, or poly (x^3 - 2x + 1)
+a=0
+b=4
+h=0.6666666666667, 0.3333333333333, 0.2222222222222
+exact=52         # optional; enables absolute-error reporting
+```
 
-which is known to be `2.0`. The composite trapezoidal rule provides a close approximation, and the error can be reported through `result_row(exact=2.0)`.
+For measured samples instead, set `source=array` and provide equally spaced values with a number of subintervals divisible by six:
 
-**Practical interpretation**
+```text
+source=array
+x=0, 1, 2, 3, 4, 5, 6
+y=1, 2, 5, 10, 17, 26, 37
+# exact=enter-a-number-here-if-known
+```
 
-- If the function is known analytically, we can use `FunctionDataSource` to sample it on a grid.
-- If the function is already measured from an experiment, we can use `ArrayDataSource` directly.
-- `CompositeTrapezoidal` is a good general-purpose method for smooth, sampled functions where more advanced quadrature is not yet needed.
-- It is particularly well suited to laboratory work and educational examples where the main goal is to understand approximation error and how the accuracy improves as the number of subdivisions increases.
+The `exact` line is optional for either input type. Lines beginning with `#` and blank lines are ignored. Results for all rules and step sizes are compared in `output/integration_comparison_table.txt`, `output/integration_comparison_results.csv`, `output/integration_comparison_analysis.txt`, and `output/integration_comparison_graph.png`. The graph plots each method's approximate integral against `h` and includes the exact integral as a reference when provided.
 
-This integration module adds a complete, reusable, and extensible numerical-integration layer to the project without changing the structure of the existing differentiation or interpolation logic.
+The Simpson methods validate that x-values are equally spaced and that the subinterval count is valid for the selected rule; the trapezoidal method accepts nonuniform x-values.
 
 **Detailed line-by-line explanation (example):**
 The following section explains `src/interpolation/divided_differences.py` line-by-line so you can see why each part exists and how it supports the overall goals.

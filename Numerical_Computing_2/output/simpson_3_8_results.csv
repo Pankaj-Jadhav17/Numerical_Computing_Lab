@@ -1,0 +1,2 @@
+method,interval_start,interval_end,n,result,exact,absolute_error
+CompositeSimpsonThreeEighths,0.0,4.0,7,52.0,52.0,0.0

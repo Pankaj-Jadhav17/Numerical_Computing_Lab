@@ -1,0 +1,15 @@
+# Integration comparison input.
+# Every h must divide |b - a| into a subinterval count divisible by 6.
+source=function
+function=poly
+a=0
+b=4
+h=0.6666666666667, 0.3333333333333, 0.2222222222222
+exact=52
+
+# Function options: exp, sin, cos, poly (x^3 - 2x + 1).
+# For sampled data, replace the function settings with:
+# source=array
+# x=0, 0.6666666667, 1.3333333333, 2, 2.6666666667, 3.3333333333, 4
+# y=1, -0.037037037, 0.703703704, 5, 14.62962963, 31.37037037, 57
+# exact=optional exact integral

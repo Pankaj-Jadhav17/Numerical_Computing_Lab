@@ -1,0 +1,12 @@
+Eigenvalue / Eigenvector Analysis
+Method: PowerMethod
+Converged: True
+Iterations: 36
+Input matrix:
+  [ 4  1]
+  [ 1  3]
+Dominant eigenvalue: 4.618033988749895
+Residual norm: 6.161999800614038e-11
+Eigenvector:
+   0.850650808367
+   0.525731112096

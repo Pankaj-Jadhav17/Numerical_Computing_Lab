@@ -1,0 +1,4 @@
+Numerical Integration Analysis
+CompositeSimpsonOneThird used 7 data points.
+Approximate integral over [0.0, 4.0] = 52.
+Absolute error = 0.
