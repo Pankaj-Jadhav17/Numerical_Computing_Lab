@@ -1,14 +1,17 @@
-from .eigen_methods import (
+"""Matrix and eigenvalue algorithms."""
+
+from .eigen import (
     EigenvalueMethod,
     InversePowerMethod,
     JacobiMethod,
     PowerMethod,
     ShiftedInversePowerMethod,
-    read_eigen_input,
-    save_eigen_results,
 )
+from .input_handler import read_eigen_input, save_eigen_results
+from .matrix import Matrix
 
 __all__ = [
+    "Matrix",
     "EigenvalueMethod",
     "PowerMethod",
     "InversePowerMethod",
